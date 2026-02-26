@@ -7,7 +7,7 @@ import { LogIn, Mail, Lock, Code } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, refreshSession } = useAuth()
   const [loginType, setLoginType] = useState<'guest' | 'admin'>('guest')
 
   // Redirect if already authenticated
@@ -41,7 +41,12 @@ export default function LoginPage() {
 
       const data = await response.json()
       localStorage.setItem('hochzeit_auth_session', data.token)
-      router.push('/dashboard')
+      
+      // Refresh session immediately before redirect
+      setTimeout(() => {
+        refreshSession()
+        router.push('/dashboard')
+      }, 100)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login fehlgeschlagen')
     } finally {
@@ -68,7 +73,12 @@ export default function LoginPage() {
 
       const data = await response.json()
       localStorage.setItem('hochzeit_auth_session', data.token)
-      router.push('/admin')
+      
+      // Refresh session immediately before redirect
+      setTimeout(() => {
+        refreshSession()
+        router.push('/admin')
+      }, 100)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login fehlgeschlagen')
     } finally {

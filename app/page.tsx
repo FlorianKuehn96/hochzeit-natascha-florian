@@ -17,10 +17,14 @@ export default function Home() {
   const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login')
-    }
+    // Give a small delay for session to load
+    const timer = setTimeout(() => {
+      if (!isLoading && !isAuthenticated) {
+        router.push('/login')
+      }
+    }, 200)
+    
+    return () => clearTimeout(timer)
   }, [isAuthenticated, isLoading, router])
 
   // Show loading while checking auth

@@ -11,6 +11,7 @@ interface AuthContextType {
   isAdmin: boolean
   isGuest: boolean
   logout: () => void
+  refreshSession: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -19,16 +20,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    // Load session from storage on mount
+  const loadSession = () => {
     const currentSession = getCurrentSession()
     setSession(currentSession)
     setIsLoading(false)
+  }
+
+  useEffect(() => {
+    // Load session from storage on mount
+    loadSession()
+    
+    // Also listen for storage changes (in case another tab logs in)
+    window.addEventListener('storage', loadSession)
+    return () => window.removeEventListener('storage', loadSession)
   }, [])
 
   const logout = () => {
     clearSessionFromStorage()
     setSession(null)
+  }
+
+  const refreshSession = () => {
+    loadSession()
   }
 
   const value: AuthContextType = {
@@ -38,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: session?.role === 'admin',
     isGuest: session?.role === 'guest',
     logout,
+    refreshSession,
   }
 
   return (
