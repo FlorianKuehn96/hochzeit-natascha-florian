@@ -1,48 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getGuestByCode } from '@/lib/db'
+import { createSessionToken } from '@/lib/auth-utils'
 
 /**
  * POST /api/auth/guest
  * Guest login with code
- * 
- * TODO: 
- * - Validate code against guest database
- * - Create JWT token
- * - Return token
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { code } = body
 
-    if (!code) {
+    if (!code || typeof code !== 'string') {
       return NextResponse.json(
         { error: 'Code erforderlich' },
         { status: 400 }
       )
     }
 
-    // TODO: Validate code against database
-    // const guest = await db.guests.findByCode(code)
-    // if (!guest) {
-    //   return NextResponse.json({ error: 'Ungültiger Code' }, { status: 401 })
-    // }
+    // Find guest by code
+    const guest = getGuestByCode(code.trim().toUpperCase())
+    if (!guest) {
+      return NextResponse.json(
+        { error: 'Ungültiger Code' },
+        { status: 401 }
+      )
+    }
 
-    // TODO: Create JWT token
-    // const token = createToken({
-    //   id: guest.id,
-    //   role: 'guest',
-    //   email: guest.email,
-    //   code: guest.code,
-    // })
+    // Create session token
+    const token = createSessionToken({
+      id: guest.id,
+      role: 'guest',
+      email: guest.email,
+      name: guest.name,
+      code: guest.code,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
+    })
 
-    // Placeholder response
     return NextResponse.json({
-      token: 'placeholder_token_guest',
+      token,
       guest: {
-        id: 'guest_123',
-        name: 'Test Guest',
-        email: 'guest@test.de',
-        code: code,
+        id: guest.id,
+        name: guest.name,
+        email: guest.email,
+        code: guest.code,
       },
     })
   } catch (error) {

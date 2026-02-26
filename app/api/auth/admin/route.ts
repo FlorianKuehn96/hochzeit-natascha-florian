@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAdminByEmail, validateAdminPassword } from '@/lib/db'
+import { createSessionToken } from '@/lib/auth-utils'
 
 /**
  * POST /api/auth/admin
  * Admin login with email & password
- * 
- * TODO:
- * - Validate email & password against admin database
- * - Use bcrypt to compare password hash
- * - Create JWT token
- * - Return token
  */
 export async function POST(request: NextRequest) {
   try {
@@ -22,29 +18,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Validate against admin database
-    // const admin = await db.admins.findByEmail(email)
-    // if (!admin) {
-    //   return NextResponse.json({ error: 'Admin nicht gefunden' }, { status: 401 })
-    // }
-    
-    // const isPasswordValid = await bcrypt.compare(password, admin.password)
-    // if (!isPasswordValid) {
-    //   return NextResponse.json({ error: 'Passwort falsch' }, { status: 401 })
-    // }
+    // Validate credentials
+    const isValid = await validateAdminPassword(email, password)
+    if (!isValid) {
+      return NextResponse.json(
+        { error: 'E-Mail oder Passwort falsch' },
+        { status: 401 }
+      )
+    }
 
-    // TODO: Create JWT token
-    // const token = createToken({
-    //   id: admin.email,
-    //   role: 'admin',
-    //   email: admin.email,
-    // })
+    const admin = getAdminByEmail(email)
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Admin nicht gefunden' },
+        { status: 401 }
+      )
+    }
 
-    // Placeholder response
+    // Create session token
+    const token = createSessionToken({
+      id: email,
+      role: 'admin',
+      email: email,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
+    })
+
     return NextResponse.json({
-      token: 'placeholder_token_admin',
+      token,
       admin: {
-        email: email,
+        email,
         role: 'admin',
       },
     })
