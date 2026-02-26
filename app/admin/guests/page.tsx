@@ -8,7 +8,7 @@ import { Guest } from '@/lib/auth-types'
 
 export default function GuestManagementPage() {
   const router = useRouter()
-  const { session, isAdmin } = useAuth()
+  const { session, isAdmin, isLoading: authLoading } = useAuth()
   const [guests, setGuests] = useState<Guest[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,12 +18,14 @@ export default function GuestManagementPage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!authLoading && !isAdmin) {
       router.push('/login')
       return
     }
-    fetchGuests()
-  }, [isAdmin, router])
+    if (isAdmin) {
+      fetchGuests()
+    }
+  }, [isAdmin, authLoading, router])
 
   const fetchGuests = async () => {
     if (!session?.id) return

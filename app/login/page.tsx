@@ -1,22 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import { LogIn, Mail, Lock, Code } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
   const [loginType, setLoginType] = useState<'guest' | 'admin'>('guest')
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/')
+    }
+  }, [isAuthenticated, isLoading, router])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleGuestLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setIsLoading(true)
+    setIsSubmitting(true)
 
     try {
       // TODO: Call /api/auth/guest endpoint
@@ -36,14 +45,14 @@ export default function LoginPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login fehlgeschlagen')
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setIsLoading(true)
+    setIsSubmitting(true)
 
     try {
       // TODO: Call /api/auth/admin endpoint
@@ -63,8 +72,17 @@ export default function LoginPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login fehlgeschlagen')
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
+  }
+
+  // Loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-forest-dark to-deep-green flex items-center justify-center">
+        <p className="text-white">Wird geladen...</p>
+      </div>
+    )
   }
 
   return (
@@ -136,10 +154,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="w-full py-3 bg-terracotta text-white rounded-xl font-medium hover:bg-burnt-orange disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300"
               >
-                {isLoading ? 'Wird geladen...' : 'Anmelden'}
+                {isSubmitting ? 'Wird geladen...' : 'Anmelden'}
               </button>
             </form>
           ) : (
@@ -184,10 +202,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="w-full py-3 bg-terracotta text-white rounded-xl font-medium hover:bg-burnt-orange disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300"
               >
-                {isLoading ? 'Wird geladen...' : 'Admin Login'}
+                {isSubmitting ? 'Wird geladen...' : 'Admin Login'}
               </button>
             </form>
           )}

@@ -7,13 +7,13 @@ import { Users, BarChart3, Settings, LogOut } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const { session, isAdmin, logout } = useAuth()
+  const { session, isAdmin, isLoading, logout } = useAuth()
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isLoading && !isAdmin) {
       router.push('/login')
     }
-  }, [isAdmin, router])
+  }, [isAdmin, isLoading, router])
 
   if (!session || !isAdmin) {
     return (
