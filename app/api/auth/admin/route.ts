@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminByEmail, validateAdminPassword } from '@/lib/db'
+import { getAdminByEmail, validateAdminPassword } from '@/lib/db-upstash'
 import { createSessionToken } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const admin = getAdminByEmail(email)
+    const admin = await getAdminByEmail(email)
     if (!admin) {
       return NextResponse.json(
         { error: 'Admin nicht gefunden' },

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGuestByCode } from '@/lib/db'
+import { getGuestByCode } from '@/lib/db-upstash'
 import { createSessionToken } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find guest by code
-    const guest = getGuestByCode(code.trim().toUpperCase())
+    const guest = await getGuestByCode(code.trim().toUpperCase())
     if (!guest) {
       return NextResponse.json(
         { error: 'Ungültiger Code' },

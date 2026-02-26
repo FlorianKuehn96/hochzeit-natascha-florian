@@ -1,55 +1,56 @@
 #!/usr/bin/env node
 
 /**
- * Initialize admin accounts
+ * Initialize admin accounts (Upstash Redis)
  * Usage: node scripts/init-admin.js
  */
 
-const Database = require('better-sqlite3')
 const bcrypt = require('bcryptjs')
-const path = require('path')
-const fs = require('fs')
+const { Redis } = require('@upstash/redis')
 
-const dataDir = path.join(process.cwd(), 'data')
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true })
+// Check for env vars
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN
+
+if (!REDIS_URL || !REDIS_TOKEN) {
+  console.error('❌ UPSTASH_REDIS_REST_URL und UPSTASH_REDIS_REST_TOKEN erforderlich!')
+  console.error('   Setze die Umgebungsvariablen in Vercel oder lokal')
+  process.exit(1)
 }
 
-const dbPath = path.join(dataDir, 'hochzeit.db')
-const db = new Database(dbPath)
+const redis = new Redis({
+  url: REDIS_URL,
+  token: REDIS_TOKEN,
+})
 
-// Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS admins (
-    email TEXT PRIMARY KEY,
-    password TEXT NOT NULL,
-    name TEXT,
-    created_at TEXT NOT NULL
-  )
-`)
+const KEYS = {
+  ADMIN: (email) => `admin:${email.toLowerCase()}`,
+  ADMIN_LIST: () => `admins:list`,
+}
 
 async function createAdmin(email, password, name) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
     const now = new Date().toISOString()
 
-    const stmt = db.prepare(
-      'INSERT INTO admins (email, password, name, created_at) VALUES (?, ?, ?, ?)'
-    )
+    const admin = {
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      createdAt: now,
+      name,
+    }
 
-    stmt.run(email, hashedPassword, name, now)
+    await redis.set(KEYS.ADMIN(email), JSON.stringify(admin))
+    await redis.sadd(KEYS.ADMIN_LIST(), email.toLowerCase())
+
     console.log(`✅ Admin erstellt: ${email}`)
   } catch (error) {
-    if (error.message.includes('UNIQUE')) {
-      console.log(`⚠️  Admin existiert bereits: ${email}`)
-    } else {
-      console.error(`❌ Fehler: ${error.message}`)
-    }
+    console.error(`❌ Fehler bei ${email}: ${error.message}`)
   }
 }
 
 async function main() {
-  console.log('🔐 Initialisiere Admin-Accounts...\n')
+  console.log('🔐 Initialisiere Admin-Accounts (Upstash)...\n')
 
   // Admin accounts
   await createAdmin('schmittnatascha92@yahoo.de', 'changeme123', 'Natascha')
@@ -58,7 +59,10 @@ async function main() {
   console.log('\n✅ Admin-Setup abgeschlossen!')
   console.log('\n⚠️  WICHTIG: Passwörter nach dem ersten Login ändern!')
 
-  db.close()
+  process.exit(0)
 }
 
-main().catch(console.error)
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
