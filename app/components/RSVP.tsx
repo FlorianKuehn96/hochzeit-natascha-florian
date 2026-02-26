@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Send, Check, Users, Utensils, MessageSquare, Bed } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Send, Check, Users, Utensils, MessageSquare, Bed, AlertCircle } from 'lucide-react'
+import { rsvpStorage, type RSVPFormData } from '@/lib/rsvp-storage'
 
 export default function RSVP() {
   const [formData, setFormData] = useState({
@@ -14,14 +15,80 @@ export default function RSVP() {
   })
   const [submitted, setSubmitted] = useState(false)
   const [attending, setAttending] = useState<boolean | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Load existing response if available
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const email = urlParams.get('email') || localStorage.getItem('last_rsvp_email')
+    
+    if (email) {
+      const existing = rsvpStorage.getByEmail(email)
+      if (existing) {
+        setFormData({
+          name: existing.name,
+          email: existing.email,
+          guests: existing.guests || '1',
+          accommodation: existing.accommodation || 'needed',
+          dietary: existing.dietary || '',
+          message: existing.message || '',
+        })
+        setAttending(existing.attending)
+      }
+    }
+  }, [])
+
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      setError('Bitte gib deinen Namen ein')
+      return false
+    }
+    if (!formData.email.includes('@')) {
+      setError('Bitte gib eine gültige E-Mail Adresse ein')
+      return false
+    }
+    if (attending === null) {
+      setError('Bitte wähle, ob du kommst oder nicht')
+      return false
+    }
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    setError(null)
+
+    if (!validateForm()) return
+
+    setIsLoading(true)
+    try {
+      // Save to localStorage
+      const dataToSave: RSVPFormData = {
+        name: formData.name,
+        email: formData.email,
+        attending: attending!,
+        guests: attending ? formData.guests : undefined,
+        accommodation: attending ? formData.accommodation : undefined,
+        dietary: attending ? formData.dietary : undefined,
+        message: formData.message || undefined,
+      }
+
+      rsvpStorage.save(dataToSave)
+      localStorage.setItem('last_rsvp_email', formData.email)
+
+      setSubmitted(true)
+    } catch (err) {
+      setError('Fehler beim Speichern. Bitte versuche es später erneut.')
+      console.error('RSVP Error:', err)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    setError(null)
   }
 
   if (submitted) {
@@ -33,11 +100,21 @@ export default function RSVP() {
               <Check className="w-10 h-10 text-sage-green" />
             </div>
             <h2 className="font-serif text-3xl text-forest-dark mb-4">
-              {attending ? 'Wir freuen uns auf dich!' : 'Schade, dass du nicht kommen kannst'}
+              {attending ? 'Wir freuen uns auf dich! 🎉' : 'Schade, dass du nicht kommen kannst'}
             </h2>
-            <p className="text-gray-600">
-              {attending ? 'Danke für deine Zusage! Wir melden uns bei dir mit weiteren Details.' : 'Danke für die Rückmeldung. Vielleicht beim nächsten Mal!'}
+            <p className="text-gray-600 mb-6">
+              {attending ? 'Danke für deine Zusage! Wir speichern deine Daten und melden uns bei Bedarf bei dir.' : 'Danke für die Rückmeldung. Vielleicht beim nächsten Mal!'}
             </p>
+            <button
+              onClick={() => {
+                setSubmitted(false)
+                setAttending(null)
+                setFormData({ name: '', email: '', guests: '1', accommodation: 'needed', dietary: '', message: '' })
+              }}
+              className="px-6 py-2 text-sm bg-terracotta text-white rounded-full hover:bg-burnt-orange transition-colors"
+            >
+              Antwort ändern
+            </button>
           </div>
         </div>
       </section>
@@ -77,6 +154,14 @@ export default function RSVP() {
               Ich kann leider nicht
             </button>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 mb-6">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
 
           {attending !== null && (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -196,10 +281,20 @@ export default function RSVP() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-4 bg-terracotta text-white rounded-2xl font-medium text-lg hover:bg-burnt-orange transition-all duration-300 flex items-center justify-center gap-2"
+              disabled={isLoading}
+              className="w-full py-4 bg-terracotta text-white rounded-2xl font-medium text-lg hover:bg-burnt-orange disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
             >
-              <Send className="w-5 h-5" />
-              <span>Absenden</span>
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Wird gespeichert...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>Absenden</span>
+                </>
+              )}
             </button>
           </form>
         )}

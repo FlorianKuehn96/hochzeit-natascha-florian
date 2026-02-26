@@ -125,10 +125,10 @@ export default function Location() {
               <h4 className="font-serif text-2xl mb-1">Frederike</h4>
               <p className="text-sand/70 text-sm mb-3">Trauzeugin von Natascha</p>
               <a 
-                href="mailto:frederike@natascha-florian-hochzeit.de" 
+                href="mailto:frederike@example.com" 
                 className="text-terracotta hover:text-burnt-orange transition-colors text-sm"
               >
-                frederike@natascha-florian-hochzeit.de
+                [E-Mail wird mitgeteilt]
               </a>
             </div>
 
@@ -139,10 +139,10 @@ export default function Location() {
               <h4 className="font-serif text-2xl mb-1">Robert</h4>
               <p className="text-sand/70 text-sm mb-3">Trauzeuge von Florian</p>
               <a 
-                href="mailto:robert@natascha-florian-hochzeit.de" 
+                href="mailto:robert@example.com" 
                 className="text-terracotta hover:text-burnt-orange transition-colors text-sm"
               >
-                robert@natascha-florian-hochzeit.de
+                [E-Mail wird mitgeteilt]
               </a>
             </div>
           </div>
