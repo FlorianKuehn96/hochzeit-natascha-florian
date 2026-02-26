@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --color-terracotta: #C45C3E;
+  --color-sand: #E8DCC4;
+  --color-deep-green: #2D4A3E;
+  --color-sage-green: #8FA68E;
+  --color-warm-cream: #F5F0E6;
+  --color-burnt-orange: #D4754E;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-warm-cream);
+  color: #2D3436;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-warm-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-sage-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-deep-green);
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Image hover effects */
+.image-hover {
+  transition: transform 0.5s ease, filter 0.5s ease;
+}
+
+.image-hover:hover {
+  transform: scale(1.05);
+}
+
+/* Button styles */
+.btn-primary {
+  @apply px-8 py-4 bg-terracotta text-white rounded-full font-medium 
+         transition-all duration-300 hover:bg-burnt-orange 
+         hover:shadow-lg hover:shadow-terracotta/30;
+}
+
+.btn-secondary {
+  @apply px-8 py-4 border-2 border-deep-green text-deep-green rounded-full 
+         font-medium transition-all duration-300 
+         hover:bg-deep-green hover:text-white;
+}
+
+/* Section transitions */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.section-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
