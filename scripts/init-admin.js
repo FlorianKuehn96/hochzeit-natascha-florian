@@ -51,9 +51,9 @@ async function createAdmin(email, password, name) {
 async function main() {
   console.log('🔐 Initialisiere Admin-Accounts...\n')
 
-  // Prompt for admin accounts (for now, hardcoded - change these!)
-  await createAdmin('natascha@hochzeit.de', 'changeme123', 'Natascha')
-  await createAdmin('florian@hochzeit.de', 'changeme456', 'Florian')
+  // Admin accounts
+  await createAdmin('schmittnatascha92@yahoo.de', 'changeme123', 'Natascha')
+  await createAdmin('florian.kuehn96@gmx.de', 'changeme456', 'Florian')
 
   console.log('\n✅ Admin-Setup abgeschlossen!')
   console.log('\n⚠️  WICHTIG: Passwörter nach dem ersten Login ändern!')
