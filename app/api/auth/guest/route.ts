@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGuestByCode } from '@/lib/db-upstash'
+import { getGuestByCode } from '@/lib/db-wrapper'
 import { createSessionToken } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllGuests, createGuest, deleteGuest } from '@/lib/db-upstash'
+import { getAllGuests, createGuest, deleteGuest } from '@/lib/db-wrapper'
 import { parseSessionToken } from '@/lib/auth-utils'
 import { generateGuestCode } from '@/lib/auth-utils'
 

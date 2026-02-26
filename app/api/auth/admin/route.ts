@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminByEmail, validateAdminPassword } from '@/lib/db-upstash'
+import { getAdminByEmail, validateAdminPassword } from '@/lib/db-wrapper'
 import { createSessionToken } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
