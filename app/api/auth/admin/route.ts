@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminByEmail, validateAdminPassword } from '@/lib/db'
 import { createSessionToken } from '@/lib/auth-utils'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/auth/admin
  * Admin login with email & password

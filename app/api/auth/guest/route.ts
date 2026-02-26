@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getGuestByCode } from '@/lib/db'
 import { createSessionToken } from '@/lib/auth-utils'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/auth/guest
  * Guest login with code

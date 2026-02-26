@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Remove 'output: export' to allow dynamic API routes
+  // output: 'export',
   images: {
-    unoptimized: true
-  }
+    unoptimized: false, // Allow Next.js image optimization
+  },
 }
 
 module.exports = nextConfig

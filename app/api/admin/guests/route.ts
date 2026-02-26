@@ -3,6 +3,8 @@ import { getAllGuests, createGuest, deleteGuest } from '@/lib/db'
 import { parseSessionToken } from '@/lib/auth-utils'
 import { generateGuestCode } from '@/lib/auth-utils'
 
+export const dynamic = 'force-dynamic'
+
 function verifyAdminToken(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
