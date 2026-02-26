@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Menu, X, Heart } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Menu, X, Heart, LogOut, Shield } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 const navItems = [
   { name: 'Unsere Geschichte', href: '#geschichte' },
@@ -12,6 +14,8 @@ const navItems = [
 ]
 
 export default function Navigation() {
+  const router = useRouter()
+  const { logout, isAdmin, session } = useAuth()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -51,7 +55,7 @@ export default function Navigation() {
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-4">
             {navItems.map((item) => (
               <a
                 key={item.name}
@@ -63,13 +67,41 @@ export default function Navigation() {
                 {item.name}
               </a>
             ))}
-            <a
-              href="#rsvp"
-              className="px-6 py-2 bg-terracotta text-white text-sm font-medium rounded-full 
-                         hover:bg-burnt-orange transition-all duration-300 hover:shadow-lg"
-            >
-              Zusagen
-            </a>
+            
+            {/* Admin Button */}
+            {isAdmin && (
+              <button
+                onClick={() => router.push('/admin')}
+                className="flex items-center gap-2 px-4 py-2 bg-sage-green/20 text-white text-sm font-medium rounded-full 
+                           hover:bg-sage-green/30 transition-all duration-300"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </button>
+            )}
+            
+            {/* RSVP / Logout */}
+            {!session ? (
+              <a
+                href="#rsvp"
+                className="px-6 py-2 bg-terracotta text-white text-sm font-medium rounded-full 
+                           hover:bg-burnt-orange transition-all duration-300 hover:shadow-lg"
+              >
+                Zusagen
+              </a>
+            ) : (
+              <button
+                onClick={() => {
+                  logout()
+                  router.push('/login')
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600/80 text-white text-sm font-medium rounded-full 
+                           hover:bg-red-700 transition-all duration-300"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
