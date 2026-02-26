@@ -113,7 +113,12 @@ export async function createAdmin(data: {
 export async function getAdminByEmail(email: string): Promise<Admin | null> {
   try {
     if (hasRedisConfig) {
-      return await redisDb.getAdminByEmail(email)
+      const admin = await redisDb.getAdminByEmail(email)
+      // If not in Redis, try memory (fallback)
+      if (!admin) {
+        return await memoryDb.getAdminByEmail(email)
+      }
+      return admin
     }
   } catch (error) {
     console.error('[DB] Redis error, falling back to memory:', error)
@@ -127,7 +132,12 @@ export async function validateAdminPassword(
 ): Promise<boolean> {
   try {
     if (hasRedisConfig) {
-      return await redisDb.validateAdminPassword(email, password)
+      // First try Redis
+      const isValid = await redisDb.validateAdminPassword(email, password)
+      if (isValid) return true
+      
+      // If not valid in Redis, try memory (fallback to default admins)
+      return await memoryDb.validateAdminPassword(email, password)
     }
   } catch (error) {
     console.error('[DB] Redis error, falling back to memory:', error)
