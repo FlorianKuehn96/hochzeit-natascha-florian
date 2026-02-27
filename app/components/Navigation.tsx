@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Menu, X, Heart } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Menu, X, Heart, Shield, Settings, LogOut } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 const navItems = [
   { name: 'Unsere Geschichte', href: '#geschichte' },
@@ -12,8 +14,18 @@ const navItems = [
 ]
 
 export default function Navigation() {
+  const router = useRouter()
+  const { logout, isAdmin, isAuthenticated, session } = useAuth()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,16 +83,6 @@ export default function Navigation() {
               Zusagen
             </a>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`md:hidden p-2 transition-colors duration-300 ${
-              isScrolled ? 'text-forest-dark' : 'text-white'
-            }`}
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
       </nav>
 
