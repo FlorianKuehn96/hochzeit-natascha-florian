@@ -154,15 +154,16 @@ export async function createAdmin(data: {
 }): Promise<{ email: string; name?: string; createdAt: string }> {
   const hashedPassword = await bcrypt.hash(data.password, 10)
   const now = new Date().toISOString()
+  const normalizedEmail = data.email.toLowerCase()
 
   const admin: Admin = {
-    email: data.email,
+    email: normalizedEmail,
     password: hashedPassword,
     createdAt: now,
   }
 
-  await redis.set(KEYS.ADMIN(data.email), JSON.stringify(admin))
-  await redis.sadd(KEYS.ADMIN_LIST(), data.email)
+  await redis.set(KEYS.ADMIN(normalizedEmail), JSON.stringify(admin))
+  await redis.sadd(KEYS.ADMIN_LIST(), normalizedEmail)
 
   return {
     email: data.email,
