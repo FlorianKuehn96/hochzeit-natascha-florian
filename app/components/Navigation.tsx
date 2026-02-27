@@ -88,18 +88,34 @@ export default function Navigation() {
               </>
             )}
 
-            {/* Logout / RSVP */}
+            {/* Logout (für eingeloggte User) / RSVP (für Gäste) */}
             {session ? (
-              <button
-                onClick={() => {
-                  logout()
-                  router.push('/login')
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-full hover:bg-red-200 transition-all duration-300"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+              isAdmin ? (
+                // Admin: Prominenter Logout mit Icon
+                <button
+                  onClick={() => {
+                    logout()
+                    router.push('/login')
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-full hover:bg-red-200 transition-all duration-300"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              ) : (
+                // Gast: Dezenter Logout als Text-Link
+                <button
+                  onClick={() => {
+                    logout()
+                    router.push('/login')
+                  }}
+                  className={`text-sm font-medium transition-all duration-300 hover:opacity-70 underline-offset-4 hover:underline ${
+                    isScrolled ? 'text-forest-dark/70 hover:text-forest-dark' : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  Ausloggen
+                </button>
+              )
             ) : (
               <a
                 href="#rsvp"
