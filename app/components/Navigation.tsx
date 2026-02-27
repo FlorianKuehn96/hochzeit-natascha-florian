@@ -21,14 +21,6 @@ export default function Navigation() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
-    const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
     window.addEventListener('scroll', handleScroll)
@@ -63,7 +55,7 @@ export default function Navigation() {
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-4">
             {navItems.map((item) => (
               <a
                 key={item.name}
@@ -75,14 +67,58 @@ export default function Navigation() {
                 {item.name}
               </a>
             ))}
-            <a
-              href="#rsvp"
-              className="px-6 py-2 bg-terracotta text-white text-sm font-medium rounded-full 
-                         hover:bg-burnt-orange transition-all duration-300 hover:shadow-lg"
-            >
-              Zusagen
-            </a>
+
+            {/* Admin Buttons */}
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="flex items-center gap-2 px-4 py-2 bg-sage-green/20 text-white text-sm font-medium rounded-full hover:bg-sage-green/30 transition-all duration-300"
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </button>
+                <button
+                  onClick={() => router.push('/admin/change-password')}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-600 text-sm font-medium rounded-full hover:bg-blue-200 transition-all duration-300"
+                >
+                  <Settings className="w-4 h-4" />
+                  Passwort
+                </button>
+              </>
+            )}
+
+            {/* Logout / RSVP */}
+            {session ? (
+              <button
+                onClick={() => {
+                  logout()
+                  router.push('/login')
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-full hover:bg-red-200 transition-all duration-300"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            ) : (
+              <a
+                href="#rsvp"
+                className="px-6 py-2 bg-terracotta text-white text-sm font-medium rounded-full hover:bg-burnt-orange transition-all duration-300 hover:shadow-lg"
+              >
+                Zusagen
+              </a>
+            )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`md:hidden p-2 transition-colors duration-300 ${
+              isScrolled ? 'text-forest-dark' : 'text-white'
+            }`}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </nav>
 
@@ -103,14 +139,54 @@ export default function Navigation() {
               {item.name}
             </a>
           ))}
-          <a
-            href="#rsvp"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="mt-4 px-8 py-3 bg-terracotta text-white font-medium rounded-full 
-                       hover:bg-burnt-orange transition-all duration-300"
-          >
-            Zusagen
-          </a>
+          {/* Admin Buttons Mobile */}
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  router.push('/admin')
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-sage-green/20 text-white rounded-full hover:bg-sage-green/30 transition-all"
+              >
+                <Shield className="w-5 h-5" />
+                Admin
+              </button>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  router.push('/admin/change-password')
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-all"
+              >
+                <Settings className="w-5 h-5" />
+                Passwort
+              </button>
+            </>
+          )}
+
+          {/* Logout / RSVP Mobile */}
+          {session ? (
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false)
+                logout()
+                router.push('/login')
+              }}
+              className="flex items-center gap-2 px-8 py-3 bg-red-100 text-red-600 font-medium rounded-full hover:bg-red-200 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </button>
+          ) : (
+            <a
+              href="#rsvp"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="mt-4 px-8 py-3 bg-terracotta text-white font-medium rounded-full hover:bg-burnt-orange transition-all duration-300"
+            >
+              Zusagen
+            </a>
+          )}
         </div>
       </div>
     </>

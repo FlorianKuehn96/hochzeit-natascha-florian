@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/react'
 import { AuthProvider } from '@/lib/auth-context'
-import AuthHeader from './components/AuthHeader'
 
 export const metadata: Metadata = {
   title: 'Natascha & Florian | 19. September 2026',
@@ -32,7 +31,6 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          <AuthHeader />
           {children}
           <Analytics />
         </AuthProvider>
