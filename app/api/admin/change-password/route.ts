@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseSessionToken } from '@/lib/auth-utils'
-import { validateAdminPassword, createAdmin } from '@/lib/db-wrapper'
-import bcrypt from 'bcryptjs'
+import { validateAdminPassword } from '@/lib/db-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,16 +54,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10)
-
-    // Update in database
-    // TODO: Create updateAdmin function or use direct update
-    // For now, we'll create a new admin entry which will overwrite
-    await createAdmin({
-      email: adminEmail,
-      password: newPassword,
-    })
+    // Update in database using the updateAdminPassword helper
+    // to ensure both Redis and Memory are updated consistently
+    const { updateAdminPassword } = await import('@/lib/db-wrapper')
+    const updated = await updateAdminPassword(adminEmail, newPassword)
+    
+    if (!updated) {
+      return NextResponse.json(
+        { error: 'Passwort konnte nicht aktualisiert werden' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       message: 'Passwort erfolgreich geändert',

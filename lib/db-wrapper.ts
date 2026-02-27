@@ -100,49 +100,98 @@ export async function createAdmin(data: {
   password: string
   name?: string
 }): Promise<{ email: string; name?: string; createdAt: string }> {
+  // Always normalize email for consistency
+  const normalizedData = {
+    ...data,
+    email: data.email.toLowerCase()
+  }
+  
   try {
     if (hasRedisConfig) {
-      return await redisDb.createAdmin(data)
+      const result = await redisDb.createAdmin(normalizedData)
+      // Also update memory to keep fallback in sync
+      await memoryDb.createAdmin(normalizedData)
+      return result
     }
   } catch (error) {
-    console.error('[DB] Redis error, falling back to memory:', error)
+    console.error('[DB] Redis error during createAdmin:', error)
   }
-  return memoryDb.createAdmin(data)
+  // Fall back to in-memory or if Redis failed
+  return memoryDb.createAdmin(normalizedData)
 }
 
 export async function getAdminByEmail(email: string): Promise<Admin | null> {
+  const normalizedEmail = email.toLowerCase()
   try {
     if (hasRedisConfig) {
-      const admin = await redisDb.getAdminByEmail(email)
+      const admin = await redisDb.getAdminByEmail(normalizedEmail)
       // If not in Redis, try memory (fallback)
       if (!admin) {
-        return await memoryDb.getAdminByEmail(email)
+        return await memoryDb.getAdminByEmail(normalizedEmail)
       }
       return admin
     }
   } catch (error) {
     console.error('[DB] Redis error, falling back to memory:', error)
   }
-  return memoryDb.getAdminByEmail(email)
+  return memoryDb.getAdminByEmail(normalizedEmail)
 }
 
 export async function validateAdminPassword(
   email: string,
   password: string
 ): Promise<boolean> {
+  const normalizedEmail = email.toLowerCase()
   try {
     if (hasRedisConfig) {
       // First try Redis
-      const isValid = await redisDb.validateAdminPassword(email, password)
-      if (isValid) return true
+      const isValid = await redisDb.validateAdminPassword(normalizedEmail, password)
+      if (isValid) {
+        console.log(`[DB] Password validated via Redis for ${normalizedEmail}`)
+        return true
+      }
       
-      // If not valid in Redis, try memory (fallback to default admins)
-      return await memoryDb.validateAdminPassword(email, password)
+      // If Redis returned false, check if admin exists in Redis
+      // If exists but password wrong, DON'T try memory fallback
+      const redisAdmin = await redisDb.getAdminByEmail(normalizedEmail)
+      if (redisAdmin) {
+        console.log(`[DB] Admin found in Redis but password wrong: ${normalizedEmail}`)
+        return false
+      }
+      
+      // If not in Redis at all, try memory (for legacy/default admins)
+      console.log(`[DB] Admin not in Redis, trying memory fallback: ${normalizedEmail}`)
+      return await memoryDb.validateAdminPassword(normalizedEmail, password)
     }
   } catch (error) {
     console.error('[DB] Redis error, falling back to memory:', error)
   }
-  return memoryDb.validateAdminPassword(email, password)
+  return memoryDb.validateAdminPassword(normalizedEmail, password)
+}
+
+export async function updateAdminPassword(
+  email: string,
+  newPassword: string
+): Promise<boolean> {
+  const normalizedEmail = email.toLowerCase()
+  try {
+    if (hasRedisConfig) {
+      // Update in Redis
+      await redisDb.createAdmin({ email: normalizedEmail, password: newPassword })
+      // Also update in memory to keep them in sync
+      await memoryDb.createAdmin({ email: normalizedEmail, password: newPassword })
+      console.log(`[DB] Password updated in both Redis and Memory for ${normalizedEmail}`)
+      return true
+    } else {
+      // Only memory
+      await memoryDb.createAdmin({ email: normalizedEmail, password: newPassword })
+      console.log(`[DB] Password updated in Memory for ${normalizedEmail}`)
+      return true
+    }
+  } catch (error) {
+    console.error('[DB] Error updating admin password:', error)
+    return false
+  }
 }
 
 export async function getAllAdmins(): Promise<any[]> {
