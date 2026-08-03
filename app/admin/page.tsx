@@ -69,10 +69,14 @@ export default function AdminDashboard() {
     totalPeople: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => sum + (g.rsvp.guests || 1), 0),
     needAccommodation: guests.filter(g => g.rsvp.status === 'attending' && g.rsvp.accommodation === 'needed').length,
     meals: {
-      beef: guests.filter(g => g.mealChoice?.selections?.includes('beef')).length,
-      fish: guests.filter(g => g.mealChoice?.selections?.includes('fish')).length,
-      vegan: guests.filter(g => g.mealChoice?.selections?.includes('vegan')).length,
-      none: guests.filter(g => g.rsvp.status === 'attending' && !g.mealChoice?.selections?.length).length,
+      beef: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => sum + (g.mealChoice?.selections?.filter(s => s === 'beef').length || 0), 0),
+      fish: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => sum + (g.mealChoice?.selections?.filter(s => s === 'fish').length || 0), 0),
+      vegan: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => sum + (g.mealChoice?.selections?.filter(s => s === 'vegan').length || 0), 0),
+      none: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => {
+        const adults = (g.rsvp.guests && g.rsvp.guests >= 2) ? 2 : 1
+        const chosen = g.mealChoice?.selections?.length || 0
+        return sum + Math.max(0, adults - chosen)
+      }, 0),
     }
   }
 
