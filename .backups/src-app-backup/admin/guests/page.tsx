@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { Plus, Trash2, Copy, CheckCircle, Clock, X, Users, Download } from 'lucide-react'
+import { Plus, Trash2, Copy, CheckCircle, Clock, X, Users } from 'lucide-react'
 import { Guest } from '@/lib/auth-types'
 
 export default function GuestManagementPage() {
@@ -28,9 +28,14 @@ export default function GuestManagementPage() {
   }, [isAdmin, authLoading, router])
 
   const fetchGuests = async () => {
+    if (!session?.id) return
+
     try {
+      const token = localStorage.getItem('hochzeit_auth_session')
       const response = await fetch('/api/admin/guests', {
-        credentials: 'include',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
 
       if (!response.ok) {
@@ -52,10 +57,13 @@ export default function GuestManagementPage() {
     setIsSubmitting(true)
 
     try {
+      const token = localStorage.getItem('hochzeit_auth_session')
       const response = await fetch('/api/admin/guests', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: newGuest.name,
           email: newGuest.email,
@@ -83,10 +91,13 @@ export default function GuestManagementPage() {
     if (!confirm(`Möchtest du diesen Gast wirklich löschen?`)) return
 
     try {
+      const token = localStorage.getItem('hochzeit_auth_session')
       const response = await fetch('/api/admin/guests', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ code }),
       })
 
@@ -106,75 +117,12 @@ export default function GuestManagementPage() {
     setTimeout(() => setCopiedCode(null), 2000)
   }
 
-  const handleExportCSV = () => {
-    const headers = [
-      'Name',
-      'E-Mail',
-      'Code',
-      'Status',
-      'Personen',
-      'Unterkunft',
-      'Ernährung',
-      'Nachricht',
-      'Eingereicht am',
-    ]
-
-    const escapeCSV = (value: string | number | undefined | null) => {
-      if (value === undefined || value === null) return ''
-      const str = String(value)
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`
-      }
-      return str
-    }
-
-    const statusLabel = (status: string) => {
-      switch (status) {
-        case 'attending': return 'Zusage'
-        case 'declined': return 'Absage'
-        default: return 'Ausstehend'
-      }
-    }
-
-    const accomLabel = (acc?: string) => {
-      switch (acc) {
-        case 'needed': return 'Benötigt'
-        case 'not-needed': return 'Nicht benötigt'
-        default: return '-'
-      }
-    }
-
-    const rows = guests.map((g) => [
-      escapeCSV(g.name),
-      escapeCSV(g.email),
-      escapeCSV(g.code),
-      escapeCSV(statusLabel(g.rsvp.status)),
-      escapeCSV(g.rsvp.guests),
-      escapeCSV(accomLabel(g.rsvp.accommodation)),
-      escapeCSV(g.rsvp.dietary),
-      escapeCSV(g.rsvp.message),
-      escapeCSV(g.rsvp.submittedAt ? new Date(g.rsvp.submittedAt).toLocaleString('de-DE') : '-'),
-    ])
-
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `gaesteliste-hochzeit-${new Date().toISOString().slice(0, 10)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
   const stats = {
     total: guests.length,
     attending: guests.filter((g) => g.rsvp.status === 'attending').length,
     declined: guests.filter((g) => g.rsvp.status === 'declined').length,
     pending: guests.filter((g) => g.rsvp.status === 'pending').length,
     totalPeople: guests.reduce((sum, g) => sum + (g.rsvp.guests || 1), 0),
-    attendingPeople: guests
-      .filter((g) => g.rsvp.status === 'attending')
-      .reduce((sum, g) => sum + (g.rsvp.guests || 1), 0),
   }
 
   if (!isAdmin) {
@@ -186,40 +134,26 @@ export default function GuestManagementPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Gästeverwaltung</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <Plus />
-              Gast hinzufügen
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Guest Management</h1>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+          >
+            <Plus />
+            Add Guest
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Gesamtgäste</p>
-                <p className="text-3xl font-bold text-forest-dark mt-2">{stats.total}</p>
-              </div>
-              <span className="p-2 rounded-full bg-gray-200 text-gray-600">
-                <Users className="w-6 h-6" />
-              </span>
-            </div>
-          </div>
-
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Zusagen</p>
-                <p className="text-3xl font-bold text-sage-green mt-2">{stats.attending}</p>
+                <p className="text-3xl font-bold text-forest-dark mt-2">{stats.attending}</p>
               </div>
               <span className="p-2 rounded-full bg-sage-green/20 text-sage-green">
                 <CheckCircle className="w-6 h-6" />
@@ -231,7 +165,7 @@ export default function GuestManagementPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Absagen</p>
-                <p className="text-3xl font-bold text-red-600 mt-2">{stats.declined}</p>
+                <p className="text-3xl font-bold text-forest-dark mt-2">{stats.declined}</p>
               </div>
               <span className="p-2 rounded-full bg-red-100 text-red-700">
                 <X className="w-6 h-6" />
@@ -242,37 +176,18 @@ export default function GuestManagementPage() {
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Ausstehend</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.pending}</p>
+                <p className="text-gray-600 text-sm">Gesamtgäste</p>
+                <p className="text-3xl font-bold text-forest-dark mt-2">{stats.total}</p>
               </div>
-              <span className="p-2 rounded-full bg-yellow-100 text-yellow-700">
-                <Clock className="w-6 h-6" />
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Personen (zugesagt)</p>
-                <p className="text-3xl font-bold text-deep-green mt-2">{stats.attendingPeople}</p>
-              </div>
-              <span className="p-2 rounded-full bg-forest-dark/20 text-forest-dark">
+              <span className="p-2 rounded-full bg-gray-200 text-gray-600">
                 <Users className="w-6 h-6" />
               </span>
             </div>
           </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="mb-8 flex gap-3 flex-wrap">
+        {/* Button to show add guest form */}
+        <div className="text-right mb-6">
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="flex items-center gap-2 px-6 py-3 bg-forest-dark text-white rounded-lg hover:bg-forest-light transition-colors disabled:opacity-50"
@@ -280,14 +195,6 @@ export default function GuestManagementPage() {
           >
             {showAddForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
             {showAddForm ? 'Abbrechen' : 'Neuen Gast hinzufügen'}
-          </button>
-          <button
-            onClick={handleExportCSV}
-            disabled={guests.length === 0}
-            className="flex items-center gap-2 px-6 py-3 bg-terracotta text-white rounded-lg hover:bg-terracotta-dark disabled:bg-gray-400 transition-colors"
-          >
-            <Download className="w-5 h-5" />
-            CSV-Export
           </button>
         </div>
 
@@ -353,6 +260,7 @@ export default function GuestManagementPage() {
             </div>
 
             <div className="md:col-span-3 text-right">
+              {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
               <button
                 type="submit"
                 className="px-8 py-3 bg-terracotta text-white rounded-lg hover:bg-terracotta-dark transition-colors disabled:opacity-50"
@@ -389,19 +297,10 @@ export default function GuestManagementPage() {
                     RSVP Status
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Personen
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unterkunft
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ernährung
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nachricht
+                    Anzahl
                   </th>
                   <th scope="col" className="relative px-6 py-3">
-                    <span className="sr-only">Aktionen</span>
+                    <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
@@ -422,43 +321,22 @@ export default function GuestManagementPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {guest.rsvp.status === 'attending' && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Zusage
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">
+                          {guest.rsvp.status}
                         </span>
                       )}
                       {guest.rsvp.status === 'declined' && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                          Absage
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 capitalize">
+                          {guest.rsvp.status}
                         </span>
                       )}
                       {guest.rsvp.status === 'pending' && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Ausstehend
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 capitalize">
+                          {guest.rsvp.status}
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guest.rsvp.guests || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {guest.rsvp.accommodation === 'needed' && (
-                        <span className="text-blue-600">Benötigt</span>
-                      )}
-                      {guest.rsvp.accommodation === 'not-needed' && (
-                        <span className="text-gray-500">Nicht benötigt</span>
-                      )}
-                      {!guest.rsvp.accommodation && <span className="text-gray-400">-</span>}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
-                      {guest.rsvp.dietary || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
-                      {guest.rsvp.message ? (
-                        <span className="italic" title={guest.rsvp.message}>
-                          {guest.rsvp.message.length > 50
-                            ? `${guest.rsvp.message.slice(0, 50)}...`
-                            : guest.rsvp.message}
-                        </span>
-                      ) : '-'}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{guest.rsvp.guests || 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-3">
                       <button
                         onClick={() => handleDeleteGuest(guest.code)}

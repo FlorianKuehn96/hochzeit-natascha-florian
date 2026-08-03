@@ -31,8 +31,13 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# OpenClaw
+.openclaw/
+skills/
+
 # IDE
 .vscode
 .idea
 *.swp
 *.swo
+.env*.local

@@ -4,14 +4,14 @@ import { validateAdminPassword } from '@/lib/db-wrapper'
 
 export const dynamic = 'force-dynamic'
 
-function verifyAdminToken(request: NextRequest): string | null {
+async function verifyAdminToken(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return null
   }
 
   const token = authHeader.slice(7)
-  const session = parseSessionToken(token)
+  const session = await parseSessionToken(token)
   
   if (session?.role !== 'admin') {
     return null
@@ -25,7 +25,7 @@ function verifyAdminToken(request: NextRequest): string | null {
  * Change admin password
  */
 export async function POST(request: NextRequest) {
-  const adminEmail = verifyAdminToken(request)
+  const adminEmail = await verifyAdminToken(request)
   
   if (!adminEmail) {
     return NextResponse.json(

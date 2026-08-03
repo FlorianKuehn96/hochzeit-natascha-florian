@@ -4,9 +4,13 @@ import { createSessionToken } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
 
+// Cookie settings
+const COOKIE_NAME = 'hochzeit_session'
+const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 // 30 days in seconds
+
 /**
  * POST /api/auth/guest
- * Guest login with code
+ * Guest login with code - sets HttpOnly cookie
  */
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session token
-    const token = createSessionToken({
+    const token = await createSessionToken({
       id: guest.id,
       role: 'guest',
       email: guest.email,
@@ -39,8 +43,9 @@ export async function POST(request: NextRequest) {
       expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
     })
 
-    return NextResponse.json({
-      token,
+    // Create response with HttpOnly cookie
+    const response = NextResponse.json({
+      success: true,
       guest: {
         id: guest.id,
         name: guest.name,
@@ -48,6 +53,19 @@ export async function POST(request: NextRequest) {
         code: guest.code,
       },
     })
+
+    // Set HttpOnly cookie
+    response.cookies.set({
+      name: COOKIE_NAME,
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: COOKIE_MAX_AGE,
+      path: '/',
+    })
+
+    return response
   } catch (error) {
     console.error('Guest login error:', error)
     return NextResponse.json(
@@ -55,4 +73,24 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * DELETE /api/auth/guest
+ * Guest logout - clears cookie
+ */
+export async function DELETE(request: NextRequest) {
+  const response = NextResponse.json({ success: true })
+  
+  response.cookies.set({
+    name: COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  })
+
+  return response
 }

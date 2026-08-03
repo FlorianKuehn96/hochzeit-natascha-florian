@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthSession } from './auth-types'
-import { getCurrentSession, clearSessionFromStorage } from './auth-utils'
 
 interface AuthContextType {
   session: AuthSession | null
@@ -10,38 +9,52 @@ interface AuthContextType {
   isAuthenticated: boolean
   isAdmin: boolean
   isGuest: boolean
-  logout: () => void
-  refreshSession: () => void
+  logout: () => Promise<void>
+  refreshSession: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Fetch session from API (reads HttpOnly cookie)
+async function fetchSession(): Promise<AuthSession | null> {
+  try {
+    const response = await fetch('/api/auth/session', {
+      credentials: 'include',
+    })
+    if (response.ok) {
+      const data = await response.json()
+      return data.session
+    }
+  } catch (e) {
+    console.error('Failed to fetch session:', e)
+  }
+  return null
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const loadSession = () => {
-    const currentSession = getCurrentSession()
+  const loadSession = async () => {
+    const currentSession = await fetchSession()
     setSession(currentSession)
     setIsLoading(false)
   }
 
   useEffect(() => {
-    // Load session from storage on mount
     loadSession()
-    
-    // Also listen for storage changes (in case another tab logs in)
-    window.addEventListener('storage', loadSession)
-    return () => window.removeEventListener('storage', loadSession)
   }, [])
 
-  const logout = () => {
-    clearSessionFromStorage()
+  const logout = async () => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    })
     setSession(null)
   }
 
-  const refreshSession = () => {
-    loadSession()
+  const refreshSession = async () => {
+    await loadSession()
   }
 
   const value: AuthContextType = {

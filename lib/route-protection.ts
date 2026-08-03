@@ -1,13 +1,28 @@
 // Route Protection & Authentication Middleware
 import { redirect } from 'next/navigation'
-import { getCurrentSession } from './auth-utils'
+import { cookies } from 'next/headers'
+import { parseSessionToken } from './auth-utils'
+
+/**
+ * Get session from cookie (Server Component)
+ */
+async function getServerSession() {
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get('hochzeit_session')
+  
+  if (!sessionCookie?.value) {
+    return null
+  }
+  
+  return parseSessionToken(sessionCookie.value)
+}
 
 /**
  * Protect page from unauthenticated access
  * Redirects to login if not authenticated
  */
-export function protectPage() {
-  const session = getCurrentSession()
+export async function protectPage() {
+  const session = await getServerSession()
   if (!session) {
     redirect('/login')
   }
@@ -18,8 +33,8 @@ export function protectPage() {
  * Protect admin-only pages
  * Redirects to login if not admin
  */
-export function protectAdminPage() {
-  const session = getCurrentSession()
+export async function protectAdminPage() {
+  const session = await getServerSession()
   if (!session) {
     redirect('/login')
   }
@@ -33,8 +48,8 @@ export function protectAdminPage() {
  * Protect guest-only pages
  * Redirects to login if not guest
  */
-export function protectGuestPage() {
-  const session = getCurrentSession()
+export async function protectGuestPage() {
+  const session = await getServerSession()
   if (!session) {
     redirect('/login')
   }
@@ -48,8 +63,8 @@ export function protectGuestPage() {
  * Redirect if already logged in
  * (e.g., login page should redirect to dashboard if already logged in)
  */
-export function redirectIfAuthenticated(redirectTo: string = '/admin') {
-  const session = getCurrentSession()
+export async function redirectIfAuthenticated(redirectTo: string = '/admin') {
+  const session = await getServerSession()
   if (session) {
     redirect(session.role === 'admin' ? '/admin' : '/dashboard')
   }

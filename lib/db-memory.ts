@@ -9,22 +9,32 @@ const guestsMap = new Map<string, Guest>()
 const adminsMap = new Map<string, Admin>()
 const guestsList: string[] = []
 
-// Initialize with default admin accounts
+// Initialize with admin accounts from environment variables
+// Requires ADMIN_INIT=true and ADMIN_EMAIL / ADMIN_PASSWORD_HASH
 async function initializeDefaults() {
-  const adminPassword1 = await bcrypt.hash('changeme123', 10)
-  const adminPassword2 = await bcrypt.hash('changeme456', 10)
+  // Only initialize if explicitly enabled
+  if (process.env.ADMIN_INIT !== 'true') {
+    return
+  }
 
-  adminsMap.set('schmittnatascha92@yahoo.de', {
-    email: 'schmittnatascha92@yahoo.de',
-    password: adminPassword1,
-    createdAt: new Date().toISOString(),
-  })
+  // Support multiple admins via comma-separated env vars
+  const adminEmails = process.env.ADMIN_EMAIL?.split(',').map(e => e.trim()).filter(Boolean) || []
+  const adminPasswords = process.env.ADMIN_PASSWORD?.split(',').map(p => p.trim()).filter(Boolean) || []
 
-  adminsMap.set('florian.kuehn96@gmx.de', {
-    email: 'florian.kuehn96@gmx.de',
-    password: adminPassword2,
-    createdAt: new Date().toISOString(),
-  })
+  for (let i = 0; i < adminEmails.length; i++) {
+    const email = adminEmails[i]
+    const password = adminPasswords[i] || process.env.ADMIN_PASSWORD // Fallback to single password
+    
+    if (email && password) {
+      const hashedPassword = await bcrypt.hash(password, 10)
+      adminsMap.set(email.toLowerCase(), {
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        createdAt: new Date().toISOString(),
+      })
+      console.log(`[db-memory] Admin initialized: ${email}`)
+    }
+  }
 }
 
 // Initialize on first import

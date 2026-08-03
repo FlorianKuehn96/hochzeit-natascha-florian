@@ -31,6 +31,13 @@ export default function AdminDashboard() {
           <h1 className="font-serif text-2xl text-forest-dark">Admin Dashboard</h1>
           <div className="flex items-center gap-3">
             <a
+              href="/admin/guests"
+              className="flex items-center gap-2 px-4 py-2 text-forest-dark hover:bg-forest-dark/10 rounded-lg transition-colors text-sm font-medium"
+            >
+              <Users className="w-4 h-4" />
+              Gäste verwalten
+            </a>
+            <a
               href="/admin/change-password"
               className="flex items-center gap-2 px-4 py-2 text-terracotta hover:bg-terracotta/10 rounded-lg transition-colors text-sm font-medium"
             >
