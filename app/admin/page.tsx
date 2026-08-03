@@ -148,6 +148,12 @@ export default function AdminDashboard() {
               Gäste verwalten
             </a>
             <a
+              href="/admin/magic-links"
+              className="flex items-center gap-2 px-4 py-2 text-terracotta hover:bg-terracotta/10 rounded-lg transition-colors text-sm font-medium"
+            >
+              🔗 Magic Links
+            </a>
+            <a
               href="/admin/change-password"
               className="flex items-center gap-2 px-4 py-2 text-terracotta hover:bg-terracotta/10 rounded-lg transition-colors text-sm font-medium"
             >
