@@ -139,6 +139,27 @@ export async function deleteGuest(code: string): Promise<boolean> {
   return true
 }
 
+// ===== MEAL SELECTION =====
+
+export async function updateGuestMealChoice(
+  code: string,
+  mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
+): Promise<Guest | null> {
+  const guest = guestsMap.get(code)
+  if (!guest) return null
+
+  const updated: Guest = {
+    ...guest,
+    mealChoice: {
+      mainCourse,
+      submittedAt: new Date().toISOString(),
+    },
+  }
+
+  guestsMap.set(code, updated)
+  return updated
+}
+
 // ===== ADMIN OPERATIONS =====
 
 export async function createAdmin(data: {

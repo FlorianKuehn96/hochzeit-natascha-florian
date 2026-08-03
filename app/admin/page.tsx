@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { Users, CircleCheckBig, X, Clock, LogOut, Bed, Utensils, MessageSquare, ArrowLeft } from 'lucide-react'
+import { Users, CircleCheckBig, X, Clock, LogOut, Bed, Utensils, MessageSquare, ArrowLeft, Beef, Fish, Leaf, Sprout } from 'lucide-react'
 
 interface Guest {
   code: string
@@ -15,6 +15,10 @@ interface Guest {
     accommodation: 'needed' | 'not_needed'
     dietary?: string
     message?: string
+    submittedAt?: string
+  }
+  mealChoice?: {
+    mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
     submittedAt?: string
   }
 }
@@ -64,6 +68,13 @@ export default function AdminDashboard() {
     pending: guests.filter(g => g.rsvp.status === 'pending').length,
     totalPeople: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => sum + (g.rsvp.guests || 1), 0),
     needAccommodation: guests.filter(g => g.rsvp.status === 'attending' && g.rsvp.accommodation === 'needed').length,
+    meals: {
+      beef: guests.filter(g => g.mealChoice?.mainCourse === 'beef').length,
+      fish: guests.filter(g => g.mealChoice?.mainCourse === 'fish').length,
+      vegetarian: guests.filter(g => g.mealChoice?.mainCourse === 'vegetarian').length,
+      vegan: guests.filter(g => g.mealChoice?.mainCourse === 'vegan').length,
+      none: guests.filter(g => g.rsvp.status === 'attending' && !g.mealChoice?.mainCourse).length,
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -205,6 +216,56 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Meal Selection Stats */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-12">
+          <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h2 className="font-serif text-xl text-forest-dark flex items-center gap-2">
+              <Utensils className="w-5 h-5" />
+              Hauptgang-Auswahl
+            </h2>
+            <span className="text-sm text-gray-500">
+              {stats.meals.beef + stats.meals.fish + stats.meals.vegetarian + stats.meals.vegan} von {stats.attending} Zusagen
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-6">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50">
+              <Beef className="w-8 h-8 text-red-600" />
+              <div>
+                <p className="text-xs text-gray-500">Rinderfilet</p>
+                <p className="text-2xl font-bold text-red-700">{stats.meals.beef}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50">
+              <Fish className="w-8 h-8 text-blue-600" />
+              <div>
+                <p className="text-xs text-gray-500">Lachsfilet</p>
+                <p className="text-2xl font-bold text-blue-700">{stats.meals.fish}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50">
+              <Leaf className="w-8 h-8 text-yellow-600" />
+              <div>
+                <p className="text-xs text-gray-500">Vegetarisch</p>
+                <p className="text-2xl font-bold text-yellow-700">{stats.meals.vegetarian}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50">
+              <Sprout className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="text-xs text-gray-500">Vegan</p>
+                <p className="text-2xl font-bold text-green-700">{stats.meals.vegan}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+              <Clock className="w-8 h-8 text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">Noch offen</p>
+                <p className="text-2xl font-bold text-gray-500">{stats.meals.none}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Guest List */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -244,6 +305,7 @@ export default function AdminDashboard() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                       <Bed className="w-4 h-4 inline" />
                     </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Hauptgang</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Details</th>
                   </tr>
                 </thead>
@@ -267,6 +329,22 @@ export default function AdminDashboard() {
                         {/* GEÄNDERT: Neue Logik für Übernachtung */}
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {getAccommodationDisplay(guest)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {(() => {
+                            const mc = guest.mealChoice?.mainCourse
+                            if (!mc) {
+                              return <span className="text-gray-400 text-xs">-</span>
+                            }
+                            const labels: Record<string, { text: string; class: string }> = {
+                              beef: { text: '🥩 Rind', class: 'bg-red-100 text-red-700' },
+                              fish: { text: '🐟 Lachs', class: 'bg-blue-100 text-blue-700' },
+                              vegetarian: { text: '🧀 Vegi', class: 'bg-yellow-100 text-yellow-700' },
+                              vegan: { text: '🌱 Vegan', class: 'bg-green-100 text-green-700' },
+                            }
+                            const l = labels[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
+                            return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${l.class}`}>{l.text}</span>
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <button
@@ -360,6 +438,26 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 )}
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1">
+                    <Utensils className="w-3 h-3" /> Hauptgang
+                  </label>
+                  <p className="text-gray-900 mt-1">
+                    {selectedGuest.mealChoice?.mainCourse ? (() => {
+                      const mc = selectedGuest.mealChoice.mainCourse
+                      const cfg: Record<string, { text: string; class: string }> = {
+                        beef: { text: '🥩 Rinderfilet', class: 'bg-red-100 text-red-700' },
+                        fish: { text: '🐟 Lachsfilet', class: 'bg-blue-100 text-blue-700' },
+                        vegetarian: { text: '🧀 Vegetarisch', class: 'bg-yellow-100 text-yellow-700' },
+                        vegan: { text: '🌱 Vegan', class: 'bg-green-100 text-green-700' },
+                      }
+                      const c = cfg[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
+                      return <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${c.class}`}>{c.text}</span>
+                    })() : (
+                      <span className="text-gray-400">Noch keine Auswahl</span>
+                    )}
+                  </p>
+                </div>
               </div>
               <div className="p-6 border-t border-gray-200 flex justify-end">
                 <button

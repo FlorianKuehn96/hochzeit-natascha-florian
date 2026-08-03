@@ -11,7 +11,7 @@ import Gallery from '@/app/components/Gallery'
 import Gifts from '@/app/components/Gifts'
 import RSVP from '@/app/components/RSVP'
 import Footer from '@/app/components/Footer'
-import { LogOut } from 'lucide-react'
+import { LogOut, Utensils } from 'lucide-react'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -53,6 +53,19 @@ export default function DashboardPage() {
       <Gifts />
       <RSVP />
       <Footer />
+
+      {/* Meal Selection Link — only for guests who accepted */}
+      {session.role === 'guest' && (
+        <div className="fixed bottom-4 right-4 z-40">
+          <a
+            href="/meal"
+            className="flex items-center gap-2 px-5 py-3 bg-forest-dark text-white rounded-2xl shadow-lg hover:bg-forest-light transition-colors text-sm font-medium"
+          >
+            <Utensils className="w-4 h-4" />
+            Hauptgang wählen
+          </a>
+        </div>
+      )}
 
       {/* Session Info */}
       <div className="fixed bottom-4 left-4 bg-white rounded-lg shadow-md p-4 text-sm text-gray-600">

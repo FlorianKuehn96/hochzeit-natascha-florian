@@ -228,6 +228,36 @@ export async function deleteGuest(code: string): Promise<boolean> {
   }
 }
 
+// ===== MEAL SELECTION =====
+
+export async function updateGuestMealChoice(
+  code: string,
+  mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
+): Promise<Guest | null> {
+  try {
+    const redis = getRedis()
+    const guest = await getGuestByCode(code)
+    if (!guest) return null
+
+    const updatedGuest: Guest = {
+      ...guest,
+      mealChoice: {
+        mainCourse,
+        submittedAt: new Date().toISOString(),
+      },
+    }
+
+    await redis.set(KEYS.GUEST(guest.code), JSON.stringify(updatedGuest))
+    await redis.set(KEYS.GUEST_EMAIL(guest.email), JSON.stringify(updatedGuest))
+    await redis.set(KEYS.GUEST_LEGACY(guest.code), JSON.stringify(updatedGuest))
+
+    return updatedGuest
+  } catch (error) {
+    console.error('Error updating meal choice:', error)
+    return null
+  }
+}
+
 // ===== ADMIN OPERATIONS =====
 
 export async function createAdmin(data: {

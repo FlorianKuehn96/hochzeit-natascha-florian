@@ -335,6 +335,9 @@ export default function GuestManagementPage() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Unterkunft
                   </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Hauptgang
+                  </th>
                   <th scope="col" className="relative px-6 py-3">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -422,6 +425,20 @@ export default function GuestManagementPage() {
                           Ausstehend
                         </span>
                       )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {(() => {
+                        const mc = guest.mealChoice?.mainCourse
+                        if (!mc) return <span className="text-gray-300">-</span>
+                        const labels: Record<string, { text: string; class: string }> = {
+                          beef: { text: '🥩 Rind', class: 'bg-red-100 text-red-700' },
+                          fish: { text: '🐟 Lachs', class: 'bg-blue-100 text-blue-700' },
+                          vegetarian: { text: '🧀 Vegi', class: 'bg-yellow-100 text-yellow-700' },
+                          vegan: { text: '🌱 Vegan', class: 'bg-green-100 text-green-700' },
+                        }
+                        const l = labels[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
+                        return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${l.class}`}>{l.text}</span>
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-3">
                       <button

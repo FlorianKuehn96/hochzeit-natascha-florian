@@ -116,6 +116,22 @@ export async function deleteGuest(code: string): Promise<boolean> {
   return memoryDb.deleteGuest(code)
 }
 
+// ===== MEAL SELECTION =====
+
+export async function updateGuestMealChoice(
+  code: string,
+  mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
+): Promise<Guest | null> {
+  try {
+    if (hasRedisConfig()) {
+      return await redisDb.updateGuestMealChoice(code, mainCourse)
+    }
+  } catch (error) {
+    console.error('[DB] Redis error updating meal choice, falling back to memory:', error)
+  }
+  return memoryDb.updateGuestMealChoice(code, mainCourse)
+}
+
 // ===== ADMIN OPERATIONS =====
 
 export async function createAdmin(data: {

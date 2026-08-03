@@ -15,6 +15,10 @@ export interface Guest {
     message?: string
     submittedAt?: string | null
   }
+  mealChoice?: {
+    mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
+    submittedAt?: string | null
+  }
   createdAt: string
 }
 
@@ -49,4 +53,5 @@ export interface GuestListItem {
   accommodation: 'needed' | 'not-needed'
   dietary: string
   submittedAt: string | null
+  mealChoice?: 'beef' | 'fish' | 'vegetarian' | 'vegan'
 }
