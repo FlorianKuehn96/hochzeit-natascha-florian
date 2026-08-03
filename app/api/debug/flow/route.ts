@@ -4,54 +4,67 @@ import { Redis } from '@upstash/redis'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const results: any = {}
-  
-  // Step 1: Check env vars
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN
-  results.env = {
-    url: redisUrl ? `${redisUrl.substring(0, 30)}...` : 'MISSING',
-    token: redisToken ? 'SET' : 'MISSING',
-  }
   
   if (!redisUrl || !redisToken) {
-    return NextResponse.json(results)
+    return NextResponse.json({ error: 'no env' })
   }
   
-  // Step 2: Direct Redis (like debug/redis)
+  const results: any = {}
+  
+  // Test 1: Direct Redis - smembers
   try {
-    const directRedis = new Redis({ url: redisUrl, token: redisToken })
-    const directCodes = await directRedis.smembers('guests:list')
-    results.directRedis = {
-      count: directCodes.length,
-      first3: directCodes.slice(0, 3),
-    }
+    const r = new Redis({ url: redisUrl, token: redisToken })
+    const codes = await r.smembers('guests:list')
+    results.test1_smembers = { count: codes.length, codes: codes.slice(0, 3) }
   } catch (e: any) {
-    results.directRedis = { error: e.message }
+    results.test1_smembers = { error: e.message }
   }
   
-  // Step 3: Import db-upstash and call getAllGuests
-  try {
-    const { getAllGuests } = await import('@/lib/db-upstash')
-    const guests = await getAllGuests()
-    results.dbUpstash = {
-      count: guests.length,
-      first3: guests.slice(0, 3).map((g: any) => ({ name: g.name, code: g.code })),
-    }
-  } catch (e: any) {
-    results.dbUpstash = { error: e.message, stack: e.stack }
+  // Test 2: Use the EXACT same KEYS function as db-upstash.ts
+  const KEYS = {
+    GUEST: (code: string) => `guest:code:${code}`,
+    GUEST_EMAIL: (email: string) => `guest:email:${email}`,
+    GUEST_LIST: () => `guests:list`,
   }
   
-  // Step 4: Import db-wrapper and call getAllGuests
   try {
-    const { getAllGuests: wrapperGetAll } = await import('@/lib/db-wrapper')
-    const guests = await wrapperGetAll()
-    results.dbWrapper = {
-      count: guests.length,
-      first3: guests.slice(0, 3).map((g: any) => ({ name: g.name, code: g.code })),
+    const r = new Redis({ url: redisUrl, token: redisToken })
+    const codes = await r.smembers(KEYS.GUEST_LIST())
+    results.test2_keys_func = { count: codes.length, keyUsed: KEYS.GUEST_LIST(), codes: codes.slice(0, 3) }
+  } catch (e: any) {
+    results.test2_keys_func = { error: e.message }
+  }
+  
+  // Test 3: Fetch a specific guest by code
+  try {
+    const r = new Redis({ url: redisUrl, token: redisToken })
+    const codes = await r.smembers('guests:list')
+    if (codes.length > 0) {
+      const firstCode = codes[0] as string
+      const data = await r.get(KEYS.GUEST(firstCode))
+      results.test3_get_guest = { 
+        code: firstCode, 
+        key: KEYS.GUEST(firstCode),
+        found: !!data,
+        data: data ? (typeof data === 'string' ? data.substring(0, 100) : JSON.stringify(data).substring(0, 100)) : null,
+        type: typeof data,
+      }
     }
   } catch (e: any) {
-    results.dbWrapper = { error: e.message, stack: e.stack }
+    results.test3_get_guest = { error: e.message }
+  }
+  
+  // Test 4: Import db-upstash with dynamic import and call its internal getRedis
+  try {
+    const mod = await import('@/lib/db-upstash')
+    results.test4_import = { keys: Object.keys(mod) }
+    // Try calling getAllGuests
+    const guests = await mod.getAllGuests()
+    results.test4_import_guests = { count: guests.length }
+  } catch (e: any) {
+    results.test4_import = { error: e.message, stack: e.stack?.substring(0, 500) }
   }
   
   return NextResponse.json(results)
