@@ -38,7 +38,14 @@ export async function GET(request: NextRequest) {
   // Determine redirect URL - use the host from the request
   const protocol = request.headers.get('x-forwarded-proto') || 'https'
   const host = request.headers.get('host') || 'hochzeit.natascha-florian.com'
-  const redirectUrl = `${protocol}://${host}/`
+
+  // Smart redirect: guests who accepted but haven't chosen their meal → /meal
+  // Everyone else → / (startseite)
+  let path = '/'
+  if (guest.rsvp.status === 'attending' && !guest.mealChoice?.selections?.length) {
+    path = '/meal'
+  }
+  const redirectUrl = `${protocol}://${host}${path}`
 
   // Set HttpOnly cookie and redirect
   const response = NextResponse.redirect(redirectUrl)
