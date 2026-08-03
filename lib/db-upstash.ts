@@ -3,34 +3,19 @@ import { Redis } from '@upstash/redis'
 import { Guest, Admin } from './auth-types'
 import bcrypt from 'bcryptjs'
 
-// Lazy Redis client initialization
-let redis: Redis | null = null
-
+// Redis client — fresh per call to avoid stale serverless caching
 function getRedis(): Redis {
-  if (!redis) {
-    const redisUrl = process.env.UPSTASH_REDIS_REST_URL
-    const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN
 
-    console.log('[Redis Lazy Init] URL:', redisUrl ? 'SET' : 'MISSING')
-    console.log('[Redis Lazy Init] Token:', redisToken ? 'SET' : 'MISSING')
-
-    if (!redisUrl || !redisToken) {
-      throw new Error('[Redis] Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN')
-    }
-
-    redis = new Redis({
-      url: redisUrl,
-      token: redisToken,
-    })
-    
-    // Test connection
-    redis.ping().then(() => {
-      console.log('[Redis] Connection successful')
-    }).catch((err) => {
-      console.error('[Redis] Connection failed:', err)
-    })
+  if (!redisUrl || !redisToken) {
+    throw new Error('[Redis] Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN')
   }
-  return redis
+
+  return new Redis({
+    url: redisUrl,
+    token: redisToken,
+  })
 }
 
 // Key prefixes for organization
