@@ -18,7 +18,7 @@ interface Guest {
     submittedAt?: string
   }
   mealChoice?: {
-    mainCourse: 'beef' | 'fish' | 'vegan'
+    selections: string[]
     submittedAt?: string
   }
 }
@@ -69,10 +69,10 @@ export default function AdminDashboard() {
     totalPeople: guests.filter(g => g.rsvp.status === 'attending').reduce((sum, g) => sum + (g.rsvp.guests || 1), 0),
     needAccommodation: guests.filter(g => g.rsvp.status === 'attending' && g.rsvp.accommodation === 'needed').length,
     meals: {
-      beef: guests.filter(g => g.mealChoice?.mainCourse === 'beef').length,
-      fish: guests.filter(g => g.mealChoice?.mainCourse === 'fish').length,
-      vegan: guests.filter(g => g.mealChoice?.mainCourse === 'vegan').length,
-      none: guests.filter(g => g.rsvp.status === 'attending' && !g.mealChoice?.mainCourse).length,
+      beef: guests.filter(g => g.mealChoice?.selections?.includes('beef')).length,
+      fish: guests.filter(g => g.mealChoice?.selections?.includes('fish')).length,
+      vegan: guests.filter(g => g.mealChoice?.selections?.includes('vegan')).length,
+      none: guests.filter(g => g.rsvp.status === 'attending' && !g.mealChoice?.selections?.length).length,
     }
   }
 
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
               Hauptgang-Auswahl
             </h2>
             <span className="text-sm text-gray-500">
-              {stats.meals.beef + stats.meals.fish + stats.meals.vegan} von {stats.attending} Zusagen
+              {stats.meals.beef + stats.meals.fish + stats.meals.vegan} Gerichte insgesamt, {stats.meals.none} noch offen
             </span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
@@ -324,8 +324,8 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {(() => {
-                            const mc = guest.mealChoice?.mainCourse
-                            if (!mc) {
+                            const sels = guest.mealChoice?.selections
+                            if (!sels || sels.length === 0) {
                               return <span className="text-gray-400 text-xs">-</span>
                             }
                             const labels: Record<string, { text: string; class: string }> = {
@@ -333,8 +333,14 @@ export default function AdminDashboard() {
                               fish: { text: '🐟 Saibling', class: 'bg-blue-100 text-blue-700' },
                               vegan: { text: '🌱 Kürbisrisotto', class: 'bg-green-100 text-green-700' },
                             }
-                            const l = labels[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
-                            return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${l.class}`}>{l.text}</span>
+                            return (
+                              <div className="flex flex-wrap gap-1">
+                                {sels.map((mc, i) => {
+                                  const l = labels[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
+                                  return <span key={i} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${l.class}`}>{l.text}</span>
+                                })}
+                              </div>
+                            )
                           })()}
                         </td>
                         <td className="px-4 py-3 text-sm">
@@ -433,20 +439,21 @@ export default function AdminDashboard() {
                   <label className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1">
                     <Utensils className="w-3 h-3" /> Hauptgang
                   </label>
-                  <p className="text-gray-900 mt-1">
-                    {selectedGuest.mealChoice?.mainCourse ? (() => {
-                      const mc = selectedGuest.mealChoice.mainCourse
-                      const cfg: Record<string, { text: string; class: string }> = {
-                        beef: { text: '🥩 Weiderind', class: 'bg-red-100 text-red-700' },
-                        fish: { text: '🐟 Saibling', class: 'bg-blue-100 text-blue-700' },
-                        vegan: { text: '🌱 Kürbisrisotto', class: 'bg-green-100 text-green-700' },
-                      }
-                      const c = cfg[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
-                      return <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${c.class}`}>{c.text}</span>
-                    })() : (
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {selectedGuest.mealChoice?.selections?.length ? (
+                      selectedGuest.mealChoice.selections.map((mc, i) => {
+                        const cfg: Record<string, { text: string; class: string }> = {
+                          beef: { text: '🥩 Weiderind', class: 'bg-red-100 text-red-700' },
+                          fish: { text: '🐟 Saibling', class: 'bg-blue-100 text-blue-700' },
+                          vegan: { text: '🌱 Kürbisrisotto', class: 'bg-green-100 text-green-700' },
+                        }
+                        const c = cfg[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
+                        return <span key={i} className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${c.class}`}>{c.text}</span>
+                      })
+                    ) : (
                       <span className="text-gray-400">Noch keine Auswahl</span>
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
               <div className="p-6 border-t border-gray-200 flex justify-end">

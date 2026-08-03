@@ -16,7 +16,7 @@ export interface Guest {
     submittedAt?: string | null
   }
   mealChoice?: {
-    mainCourse: 'beef' | 'fish' | 'vegan'
+    selections: string[] // e.g. ['beef', 'fish'] — one per adult
     submittedAt?: string | null
   }
   createdAt: string
@@ -53,5 +53,5 @@ export interface GuestListItem {
   accommodation: 'needed' | 'not-needed'
   dietary: string
   submittedAt: string | null
-  mealChoice?: 'beef' | 'fish' | 'vegan'
+  mealChoice?: string[] // e.g. ['beef', 'fish']
 }

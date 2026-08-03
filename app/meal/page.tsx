@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { Utensils, Check, ArrowLeft, AlertCircle, Beef, Fish, Sprout } from 'lucide-react'
+import { Utensils, Check, ArrowLeft, AlertCircle, Beef, Fish, Sprout, User, Users } from 'lucide-react'
 
 const MEAL_OPTIONS = [
   {
@@ -32,10 +32,12 @@ const MEAL_OPTIONS = [
 export default function MealSelectionPage() {
   const router = useRouter()
   const { session, isGuest, isAuthenticated, isLoading: authLoading } = useAuth()
-  const [selectedMeal, setSelectedMeal] = useState<string | null>(null)
+  const [selections, setSelections] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [guestName, setGuestName] = useState('')
   const [rsvpStatus, setRsvpStatus] = useState<string>('')
+  const [numAdults, setNumAdults] = useState(1)
+  const [rsvpGuests, setRsvpGuests] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
@@ -50,7 +52,6 @@ export default function MealSelectionPage() {
     if (isGuest && session?.code) {
       fetchMealChoice()
     } else if (!authLoading && isAuthenticated && !isGuest) {
-      // Admin or other role — redirect
       router.push('/')
     }
   }, [isGuest, session?.code, authLoading, isAuthenticated, router])
@@ -64,8 +65,10 @@ export default function MealSelectionPage() {
         const data = await response.json()
         setGuestName(data.guest?.name || '')
         setRsvpStatus(data.guest?.rsvpStatus || 'pending')
-        if (data.guest?.mealChoice?.mainCourse) {
-          setSelectedMeal(data.guest.mealChoice.mainCourse)
+        setNumAdults(data.guest?.numAdults || 1)
+        setRsvpGuests(data.guest?.rsvpGuests || 1)
+        if (data.guest?.mealChoice?.selections?.length) {
+          setSelections(data.guest.mealChoice.selections)
           setSubmitted(true)
         }
       }
@@ -76,12 +79,31 @@ export default function MealSelectionPage() {
     }
   }
 
+  const toggleSelection = (mealId: string, slotIndex: number) => {
+    setError(null)
+    setSelections(prev => {
+      const next = [...prev]
+      // If nothing selected for this slot yet, just set it
+      if (slotIndex >= next.length) {
+        next.push(mealId)
+      } else {
+        // If clicking the same meal that's already in this slot, keep it (no deselect — must choose)
+        // Actually allow toggling: if same meal clicked, do nothing (must have a selection)
+        next[slotIndex] = mealId
+      }
+      // Trim to numAdults length
+      return next.slice(0, numAdults)
+    })
+  }
+
+  const allSlotsFilled = selections.length === numAdults && selections.every(s => s)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    if (!selectedMeal) {
-      setError('Bitte wähle einen Hauptgang aus.')
+    if (selections.length !== numAdults || selections.some(s => !s)) {
+      setError(`Bitte wähle für ${numAdults === 1 ? 'jede Person' : 'beide Erwachsene'} einen Hauptgang aus.`)
       return
     }
 
@@ -91,7 +113,7 @@ export default function MealSelectionPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ mainCourse: selectedMeal }),
+        body: JSON.stringify({ selections }),
       })
 
       const data = await response.json()
@@ -147,9 +169,14 @@ export default function MealSelectionPage() {
     )
   }
 
+  // Helper: get label for a meal id
+  const getMealLabel = (id: string) => {
+    const m = MEAL_OPTIONS.find(o => o.id === id)
+    return m ? `${m.emoji} ${m.title}` : id
+  }
+
   // Confirmation view
-  if (submitted && selectedMeal) {
-    const chosen = MEAL_OPTIONS.find(m => m.id === selectedMeal)
+  if (submitted && selections.length > 0) {
     return (
       <div className="min-h-screen bg-terracotta flex items-center justify-center px-6 py-12">
         <div className="bg-white rounded-3xl p-12 shadow-lg max-w-lg w-full text-center">
@@ -157,15 +184,39 @@ export default function MealSelectionPage() {
             <Check className="w-10 h-10 text-sage-green" />
           </div>
           <h1 className="font-serif text-3xl text-forest-dark mb-4">
-            Danke für deine Auswahl! 🎉
+            Danke für eure Auswahl! 🎉
           </h1>
           <p className="text-gray-600 mb-6">
-            {guestName}, wir haben deine Wahl notiert:
+            {guestName}, wir haben notiert:
           </p>
-          <div className="bg-sand/30 rounded-2xl p-6 mb-8">
-            <div className="text-4xl mb-3">{chosen?.emoji}</div>
-            <p className="font-serif text-xl text-forest-dark">{chosen?.title}</p>
-            <p className="text-sm text-gray-600 mt-2">{chosen?.description}</p>
+          <div className="space-y-3 mb-8">
+            {selections.map((sel, i) => {
+              const chosen = MEAL_OPTIONS.find(m => m.id === sel)
+              return (
+                <div key={i} className="bg-sand/30 rounded-2xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-forest-dark/10 flex items-center justify-center flex-shrink-0">
+                    {numAdults === 2 ? (
+                      <span className="text-sm font-bold text-forest-dark">{i + 1}.</span>
+                    ) : (
+                      <User className="w-5 h-5 text-forest-dark" />
+                    )}
+                  </div>
+                  <div className="text-left">
+                    <div className="text-2xl">{chosen?.emoji}</div>
+                    <p className="font-serif text-lg text-forest-dark">{chosen?.title}</p>
+                    <p className="text-xs text-gray-600">{chosen?.description}</p>
+                  </div>
+                </div>
+              )
+            })}
+            {rsvpGuests > 2 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-sm text-yellow-800">
+                <p className="flex items-center gap-2">
+                  <span className="text-xl">👶</span>
+                  Für {rsvpGuests - 2} {rsvpGuests - 2 === 1 ? 'Kind' : 'Kinder'} gibt es automatisch einen Kinderteller.
+                </p>
+              </div>
+            )}
           </div>
           <p className="text-sm text-gray-500 mb-6">
             Falls du deine Auswahl noch ändern möchtest, klicke einfach auf den Button unten.
@@ -211,12 +262,26 @@ export default function MealSelectionPage() {
             Hauptgang Auswahl
           </p>
           <h1 className="font-serif text-4xl md:text-5xl text-white">
-            Was möchtest du essen?
+            Was möchtet ihr essen?
           </h1>
-          <p className="text-white/70 mt-4 max-w-xl mx-auto">
-            Hallo {guestName}! Bitte wähle deinen Hauptgang für unsere Hochzeit.
-            Du kannst deine Auswahl später noch ändern.
-          </p>
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/15 rounded-full">
+            {numAdults === 1 ? (
+              <>
+                <User className="w-4 h-4 text-white" />
+                <span className="text-white text-sm">1 Auswahl für dich</span>
+              </>
+            ) : (
+              <>
+                <Users className="w-4 h-4 text-white" />
+                <span className="text-white text-sm">2 Auswahlen für 2 Erwachsene</span>
+              </>
+            )}
+          </div>
+          {rsvpGuests > 2 && (
+            <p className="text-white/70 mt-3 text-sm">
+              👶 Für {rsvpGuests - 2} {rsvpGuests - 2 === 1 ? 'Kind' : 'Kinder'} gibt es automatisch einen Kinderteller.
+            </p>
+          )}
         </div>
 
         {/* Error */}
@@ -227,53 +292,66 @@ export default function MealSelectionPage() {
           </div>
         )}
 
-        {/* Meal Cards */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            {MEAL_OPTIONS.map((option) => {
-              const Icon = option.icon
-              const isSelected = selectedMeal === option.id
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedMeal(option.id)
-                    setError(null)
-                  }}
-                  className={`text-left p-6 rounded-2xl border-2 transition-all duration-300 ${
-                    isSelected
-                      ? 'border-sage-green bg-sage-green/10 shadow-lg scale-[1.02]'
-                      : 'border-white/20 bg-white/90 hover:border-white/40 hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      isSelected ? 'bg-sage-green text-white' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      <Icon className="w-7 h-7" />
-                    </div>
-                    <div className="flex-grow">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-2xl">{option.emoji}</span>
-                        <h3 className="font-serif text-xl text-forest-dark">{option.title}</h3>
-                        {isSelected && <Check className="w-5 h-5 text-sage-green ml-auto" />}
+        {/* Meal selection slots */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {Array.from({ length: numAdults }).map((_, slotIndex) => (
+            <div key={slotIndex}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <span className="text-white font-bold">{slotIndex + 1}</span>
+                </div>
+                <h2 className="font-serif text-2xl text-white">
+                  {numAdults === 1 ? 'Dein Hauptgang' : `Hauptgang ${slotIndex + 1}`}
+                </h2>
+                {selections[slotIndex] && (
+                  <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 bg-sage-green text-white rounded-full text-sm">
+                    <Check className="w-4 h-4" />
+                    {getMealLabel(selections[slotIndex])}
+                  </span>
+                )}
+              </div>
+              <div className="grid md:grid-cols-3 gap-4">
+                {MEAL_OPTIONS.map((option) => {
+                  const Icon = option.icon
+                  const isSelected = selections[slotIndex] === option.id
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => toggleSelection(option.id, slotIndex)}
+                      className={`text-left p-5 rounded-2xl border-2 transition-all duration-300 ${
+                        isSelected
+                          ? 'border-sage-green bg-white shadow-lg scale-[1.02]'
+                          : 'border-white/20 bg-white/90 hover:border-white/40 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${
+                          isSelected ? 'bg-sage-green text-white' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xl">{option.emoji}</span>
+                          <h3 className="font-serif text-lg text-forest-dark">{option.title}</h3>
+                          {isSelected && <Check className="w-4 h-4 text-sage-green" />}
+                        </div>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {option.description}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        {option.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
 
           {/* Submit */}
           <div className="text-center pt-4">
             <button
               type="submit"
-              disabled={!selectedMeal || isLoading}
+              disabled={!allSlotsFilled || isLoading}
               className="px-12 py-4 bg-white text-terracotta rounded-2xl font-medium text-lg hover:bg-white/90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 inline-flex items-center gap-2"
             >
               {isLoading ? (
@@ -284,10 +362,17 @@ export default function MealSelectionPage() {
               ) : (
                 <>
                   <Check className="w-5 h-5" />
-                  <span>Auswahl bestätigen</span>
+                  <span>{numAdults === 1 ? 'Auswahl bestätigen' : 'Auswahlen bestätigen'}</span>
                 </>
               )}
             </button>
+            {!allSlotsFilled && !error && (
+              <p className="text-white/60 text-sm mt-3">
+                {numAdults === 1
+                  ? 'Bitte wähle einen Hauptgang aus.'
+                  : `Bitte wähle für beide Erwachsene je einen Hauptgang aus. (${selections.filter(Boolean).length}/${numAdults})`}
+              </p>
+            )}
           </div>
         </form>
       </div>

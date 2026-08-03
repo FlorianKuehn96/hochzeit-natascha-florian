@@ -120,16 +120,16 @@ export async function deleteGuest(code: string): Promise<boolean> {
 
 export async function updateGuestMealChoice(
   code: string,
-  mainCourse: 'beef' | 'fish' | 'vegan'
+  selections: string[]
 ): Promise<Guest | null> {
   try {
     if (hasRedisConfig()) {
-      return await redisDb.updateGuestMealChoice(code, mainCourse)
+      return await redisDb.updateGuestMealChoice(code, selections)
     }
   } catch (error) {
     console.error('[DB] Redis error updating meal choice, falling back to memory:', error)
   }
-  return memoryDb.updateGuestMealChoice(code, mainCourse)
+  return memoryDb.updateGuestMealChoice(code, selections)
 }
 
 // ===== ADMIN OPERATIONS =====

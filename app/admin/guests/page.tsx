@@ -428,15 +428,21 @@ export default function GuestManagementPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {(() => {
-                        const mc = guest.mealChoice?.mainCourse
-                        if (!mc) return <span className="text-gray-300">-</span>
+                        const sels = guest.mealChoice?.selections
+                        if (!sels || sels.length === 0) return <span className="text-gray-300">-</span>
                         const labels: Record<string, { text: string; class: string }> = {
                           beef: { text: '🥩 Weiderind', class: 'bg-red-100 text-red-700' },
                           fish: { text: '🐟 Saibling', class: 'bg-blue-100 text-blue-700' },
                           vegan: { text: '🌱 Kürbisrisotto', class: 'bg-green-100 text-green-700' },
                         }
-                        const l = labels[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
-                        return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${l.class}`}>{l.text}</span>
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            {sels.map((mc, i) => {
+                              const l = labels[mc] || { text: mc, class: 'bg-gray-100 text-gray-600' }
+                              return <span key={i} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${l.class}`}>{l.text}</span>
+                            })}
+                          </div>
+                        )
                       })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-3">

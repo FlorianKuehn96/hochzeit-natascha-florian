@@ -143,7 +143,7 @@ export async function deleteGuest(code: string): Promise<boolean> {
 
 export async function updateGuestMealChoice(
   code: string,
-  mainCourse: 'beef' | 'fish' | 'vegan'
+  selections: string[]
 ): Promise<Guest | null> {
   const guest = guestsMap.get(code)
   if (!guest) return null
@@ -151,7 +151,7 @@ export async function updateGuestMealChoice(
   const updated: Guest = {
     ...guest,
     mealChoice: {
-      mainCourse,
+      selections,
       submittedAt: new Date().toISOString(),
     },
   }

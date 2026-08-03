@@ -5,11 +5,10 @@ import { getCurrentSessionFromCookie } from '@/lib/auth-utils'
 export const dynamic = 'force-dynamic'
 
 const VALID_CHOICES = ['beef', 'fish', 'vegan'] as const
-type MealChoice = typeof VALID_CHOICES[number]
 
 /**
  * GET /api/meal-selection
- * Get current guest's meal choice
+ * Get current guest's meal choice + number of required selections
  */
 export async function GET(request: NextRequest) {
   try {
@@ -23,11 +22,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Gast nicht gefunden.' }, { status: 404 })
     }
 
+    // Number of adults = rsvp.guests if >= 2, else 1
+    // (children get Kinderteller, so only adults choose from the menu)
+    const numAdults = guest.rsvp.status === 'attending'
+      ? (guest.rsvp.guests && guest.rsvp.guests >= 2 ? 2 : 1)
+      : 0
+
     return NextResponse.json({
       guest: {
         code: guest.code,
         name: guest.name,
         rsvpStatus: guest.rsvp.status,
+        rsvpGuests: guest.rsvp.guests || 1,
+        numAdults,
         mealChoice: guest.mealChoice || null,
       },
     })
@@ -39,7 +46,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/meal-selection
- * Submit meal choice — requires authenticated guest session with RSVP status 'attending'
+ * Submit meal selections — array of choices, one per adult (max 2)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -58,13 +65,25 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { mainCourse } = body
+    const { selections } = body
 
-    if (!mainCourse || !VALID_CHOICES.includes(mainCourse)) {
-      return NextResponse.json({ error: 'Bitte wähle einen gültigen Hauptgang.' }, { status: 400 })
+    // Determine required number of selections
+    const numAdults = guest.rsvp.guests && guest.rsvp.guests >= 2 ? 2 : 1
+
+    if (!Array.isArray(selections) || selections.length !== numAdults) {
+      return NextResponse.json({
+        error: `Bitte wähle genau ${numAdults} ${numAdults === 1 ? 'Hauptgang' : 'Hauptgänge'} aus.`
+      }, { status: 400 })
     }
 
-    const updated = await updateGuestMealChoice(guest.code, mainCourse as MealChoice)
+    // Validate all choices
+    for (const choice of selections) {
+      if (!VALID_CHOICES.includes(choice as any)) {
+        return NextResponse.json({ error: 'Ungültige Auswahl. Bitte wähle aus den verfügbaren Gerichten.' }, { status: 400 })
+      }
+    }
+
+    const updated = await updateGuestMealChoice(guest.code, selections)
     if (!updated) {
       return NextResponse.json({ error: 'Fehler beim Speichern der Essensauswahl' }, { status: 500 })
     }

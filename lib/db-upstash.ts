@@ -232,7 +232,7 @@ export async function deleteGuest(code: string): Promise<boolean> {
 
 export async function updateGuestMealChoice(
   code: string,
-  mainCourse: 'beef' | 'fish' | 'vegan'
+  selections: string[]
 ): Promise<Guest | null> {
   try {
     const redis = getRedis()
@@ -242,7 +242,7 @@ export async function updateGuestMealChoice(
     const updatedGuest: Guest = {
       ...guest,
       mealChoice: {
-        mainCourse,
+        selections,
         submittedAt: new Date().toISOString(),
       },
     }
