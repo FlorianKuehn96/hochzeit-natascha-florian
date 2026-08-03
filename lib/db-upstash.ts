@@ -18,6 +18,19 @@ function getRedis(): Redis {
   })
 }
 
+// Safe parse — Upstash may return already-parsed objects
+function safeParse<T>(data: any): T | null {
+  if (!data) return null
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data) as T
+    } catch {
+      return null
+    }
+  }
+  return data as T
+}
+
 // Key prefixes for organization
 const KEYS = {
   GUEST: (code: string) => `guest:code:${code}`,
@@ -64,8 +77,7 @@ export async function getGuestByCode(code: string): Promise<Guest | null> {
   try {
     const redis = getRedis()
     const data = await redis.get(KEYS.GUEST(code.toUpperCase()))
-    if (!data) return null
-    return JSON.parse(data as string)
+    return safeParse<Guest>(data)
   } catch (error) {
     console.error('Error fetching guest by code:', error)
     return null
@@ -76,8 +88,7 @@ export async function getGuestByEmail(email: string): Promise<Guest | null> {
   try {
     const redis = getRedis()
     const data = await redis.get(KEYS.GUEST_EMAIL(email.toLowerCase()))
-    if (!data) return null
-    return JSON.parse(data as string)
+    return safeParse<Guest>(data)
   } catch (error) {
     console.error('Error fetching guest by email:', error)
     return null
@@ -86,33 +97,22 @@ export async function getGuestByEmail(email: string): Promise<Guest | null> {
 
 export async function getAllGuests(): Promise<Guest[]> {
   try {
-    console.log('[getAllGuests] Starting...')
     const redis = getRedis()
     const codes = await redis.smembers(KEYS.GUEST_LIST())
-    console.log('[getAllGuests] Found codes:', codes)
     
     if (!codes || codes.length === 0) {
-      console.log('[getAllGuests] No guests found')
       return []
     }
 
     const guests: Guest[] = []
     for (const code of codes) {
-      console.log(`[getAllGuests] Fetching guest: ${code}`)
       const data = await redis.get(KEYS.GUEST(code as string))
-      console.log(`[getAllGuests] Data for ${code}:`, data ? 'found' : 'not found')
-      if (data) {
-        try {
-          const guest = JSON.parse(data as string)
-          guests.push(guest)
-        } catch (e) {
-          console.error(`[getAllGuests] Parse error for ${code}:`, e)
-        }
+      const guest = safeParse<Guest>(data)
+      if (guest) {
+        guests.push(guest)
       }
     }
 
-    console.log(`[getAllGuests] Returning ${guests.length} guests`)
-    
     // Sort by created date descending
     return guests.sort(
       (a, b) =>
@@ -209,8 +209,7 @@ export async function getAdminByEmail(email: string): Promise<Admin | null> {
   try {
     const redis = getRedis()
     const data = await redis.get(KEYS.ADMIN(email.toLowerCase()))
-    if (!data) return null
-    return JSON.parse(data as string)
+    return safeParse<Admin>(data)
   } catch (error) {
     console.error('Error fetching admin:', error)
     return null
@@ -246,8 +245,9 @@ export async function getAllAdmins(): Promise<Admin[]> {
     const admins: Admin[] = []
     for (const email of emails) {
       const data = await redis.get(KEYS.ADMIN(email as string))
-      if (data) {
-        admins.push(JSON.parse(data as string))
+      const admin = safeParse<Admin>(data)
+      if (admin) {
+        admins.push(admin)
       }
     }
 
