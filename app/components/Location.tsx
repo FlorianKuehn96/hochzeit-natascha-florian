@@ -114,35 +114,35 @@ export default function Location() {
         <div className="mt-16">
           <div className="text-center mb-10">
             <h3 className="font-serif text-3xl mb-2">Trauzeugen</h3>
-            <p className="text-sand/70">Bei Fragen stehen euch unsere Trauzeugen gerne zur Verfügung</p>
+            <p className="text-sand/70">Bei Fragen oder wenn ihr Lust habt euch an der Planung des Tages zu beteiligen, könnt ihr gerne auf unsere Trauzeugen zugehen 😊</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10 text-center">
-              <div className="w-16 h-16 bg-terracotta/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-white" />
+              <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4">
+                <img src="/images/frederike.jpg" alt="Frederike" className="w-full h-full object-cover" style={{ objectPosition: 'center 15%' }} />
               </div>
               <h4 className="font-serif text-2xl mb-1">Frederike</h4>
               <p className="text-sand/70 text-sm mb-3">Trauzeugin von Natascha</p>
               <a 
-                href="mailto:frederike@example.com" 
+                href="tel:+4915733792504" 
                 className="text-terracotta hover:text-burnt-orange transition-colors text-sm"
               >
-                [E-Mail wird mitgeteilt]
+                0157 33792504
               </a>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10 text-center">
-              <div className="w-16 h-16 bg-terracotta/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-white" />
+              <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4">
+                <img src="/images/robert.jpg" alt="Robert" className="w-full h-full object-cover" style={{ objectPosition: 'center 35%' }} />
               </div>
               <h4 className="font-serif text-2xl mb-1">Robert</h4>
               <p className="text-sand/70 text-sm mb-3">Trauzeuge von Florian</p>
               <a 
-                href="mailto:robert@example.com" 
+                href="tel:+4917634621812" 
                 className="text-terracotta hover:text-burnt-orange transition-colors text-sm"
               >
-                [E-Mail wird mitgeteilt]
+                0176 34621812
               </a>
             </div>
           </div>

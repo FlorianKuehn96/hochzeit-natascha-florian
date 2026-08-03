@@ -3,21 +3,38 @@
 import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
-const finlandImages = [
-  { src: '/images/finland/file_1---bb33ebb4-4853-4b15-8edf-853deebecbf8.jpg', alt: 'Eisbaden in Finnland' },
-  { src: '/images/finland/file_2---83a52282-46c2-4858-bc02-4f6a1888152a.jpg', alt: 'Winter in Finnland' },
-  { src: '/images/finland/file_3---d0c6869d-6af2-4d93-9c76-c9a5cbae418f.jpg', alt: 'Schneelandschaft' },
-  { src: '/images/finland/file_4---be7a4a84-e089-4b4a-98ac-7013dc9f56c2.jpg', alt: 'Natur in Finnland' },
-  { src: '/images/finland/file_5---5b0da028-691f-40a9-aba3-ffe4a023567f.jpg', alt: 'Abenteuer' },
-  { src: '/images/finland/file_6---4619b15c-c0b2-496f-a55d-81b2f0f105e7.jpg', alt: 'Winterabenteuer' },
-  { src: '/images/finland/file_7---a9cc166a-f607-4497-9897-94124f047e3b.jpg', alt: 'Gemeinsam unterwegs' },
-  { src: '/images/finland/file_8---af459372-213c-4b11-8583-3d49789009e7.jpg', alt: 'Entdeckungen' },
-  { src: '/images/finland/file_11---da27aeb2-1019-4592-b86d-9595acd58608.jpg', alt: 'Schlittenhunde' },
-  { src: '/images/finland/file_12---7349c444-067e-4bd1-83d7-babaff624eb0.jpg', alt: 'Husky' },
-  { src: '/images/finland/file_13---3eeb6ba8-f87c-435c-beac-2dce8473a953.jpg', alt: 'Winterwunderland' },
-  { src: '/images/finland/file_15---64a38c60-4156-4a12-ab67-dbcefb2d6d85.jpg', alt: 'Rentier' },
-  { src: '/images/finland/file_16---6b41d565-8a45-437a-bd4a-9da55a87402c.jpg', alt: 'Nordlichter' },
-  { src: '/images/hero-kanada.jpg', alt: 'Der Antrag in Kanada' },
+const galleryImages = [
+  { src: '/images/saint-tropez/saint-tropez-1.jpg', alt: 'Erster gemeinsamer Urlaub in Saint-Tropez' },
+  { src: '/images/schweden/schweden-1.jpg', alt: 'Erster Camper-Urlaub in Schweden' },
+  { src: '/images/berge/gipfel-1.jpg', alt: 'Nataschas erster Gipfel' },
+  { src: '/images/berge/berge-3.jpg', alt: 'Donnerkogel – unser steilster Berg' },
+  { src: '/images/berge/berge-4.jpg', alt: 'Endlich der eigene Camper' },
+  { src: '/images/berge/berge-5.jpg', alt: 'Mit dem eigenen Camper im Süden Italiens' },
+  { src: '/images/angeln/angeln-2.jpg', alt: 'Natascha begeistert am Angeln' },
+  { src: '/images/comer-see/packraft-1.jpg', alt: 'Erste Packraft-Tour am Comer See' },
+  { src: '/images/norwegen/norwegen-1.jpg', alt: 'Norwegen' },
+  { src: '/images/norwegen/norwegen-2.jpg', alt: 'An der Küste von Å – vom Winde verweht' },
+    { src: '/images/norwegen/norwegen-4.jpg', alt: 'Norwegen' },
+  { src: '/images/angeln/angeln-1.jpg', alt: 'Nataschas erster großer Wildfisch' },
+  { src: '/images/suedostasien/suedostasien-1.jpg', alt: 'Unsere erste große Reise – Südostasien' },
+  { src: '/images/thailand/thailand-2.jpg', alt: 'Kajak fahren in Thailand' },
+  { src: '/images/neuseeland/neuseeland-9.jpg', alt: 'Tongariro – zweite große Reise beginnt' },
+  { src: '/images/neuseeland/neuseeland-1.jpg', alt: 'Schiffswrack Rarotonga erkunden' },
+  { src: '/images/neuseeland/neuseeland-2.jpg', alt: 'Cook Islands – Sonne, Strand & Meer' },
+  { src: '/images/neuseeland/neuseeland-3.jpg', alt: 'Kajak auf dem Meer in Neuseeland' },
+  { src: '/images/neuseeland/neuseeland-4.jpg', alt: 'Hobbiton' },
+  { src: '/images/neuseeland/neuseeland-5.jpg', alt: 'Hobbiton' },
+  { src: '/images/neuseeland/neuseeland-6.jpg', alt: 'Südspitze Neuseelands – so weit weg wie noch nie' },
+  { src: '/images/neuseeland/neuseeland-7.jpg', alt: 'Rotorua – die Kraft der Erde spüren' },
+  { src: '/images/costa-rica/costa-rica-1.jpg', alt: 'Baden im Dschungel Costa Ricas' },
+  { src: '/images/rom/rom-1.jpg', alt: 'Kulturausflug ins Colosseum' },
+  { src: '/images/finland/snowmobile-1.jpg', alt: 'Schneemobil-Tour durch die Wildnis Finnisch-Lapplands' },
+  { src: '/images/finland/husky-tour.jpg', alt: 'Mit den Huskys über Nacht in die Wildnis Finnlands' },
+  { src: '/images/finland/nordlichter.jpg', alt: 'Nordlichter in Finnland' },
+  { src: '/images/finland/finland-abschied.jpg', alt: 'Abschied von Finnisch-Lappland' },
+  { src: '/images/kanada/kanada-1.jpg', alt: 'Auf Grizzlytour in Kanada' },
+  { src: '/images/kanada/kanada-2.jpg', alt: 'In der Wildnis Kanadas' },
+  { src: '/images/hero-kanada.jpg?v=3', alt: 'Der Antrag in Kanada' },
 ]
 
 export default function Gallery() {
@@ -34,14 +51,14 @@ export default function Gallery() {
   const goToPrevious = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (selectedImage !== null) {
-      setSelectedImage(selectedImage === 0 ? finlandImages.length - 1 : selectedImage - 1)
+      setSelectedImage(selectedImage === 0 ? galleryImages.length - 1 : selectedImage - 1)
     }
   }
 
   const goToNext = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (selectedImage !== null) {
-      setSelectedImage(selectedImage === finlandImages.length - 1 ? 0 : selectedImage + 1)
+      setSelectedImage(selectedImage === galleryImages.length - 1 ? 0 : selectedImage + 1)
     }
   }
 
@@ -57,18 +74,18 @@ export default function Gallery() {
           </h2>
           <div className="w-20 h-1 bg-terracotta mx-auto mt-6 rounded-full" />
           <p className="text-gray-600 mt-6 max-w-2xl mx-auto">
-            Von St. Tropez über Südostasien bis nach Neuseeland, Kanada und Finnland — 
+            Von St. Tropez über Schweden und Norwegen bis nach Südostasien, Neuseeland und Kanada — 
             wir lieben es, die Welt zu entdecken.
           </p>
         </div>
 
         {/* Image Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {finlandImages.map((image, index) => (
+          {galleryImages.map((image, index) => (
             <div
               key={index}
               className={`relative aspect-square overflow-hidden rounded-2xl cursor-pointer group ${
-                index === 0 || index === 5 ? 'md:col-span-2 md:row-span-2' : ''
+                index === 0 || index === 15 || index === 27 ? 'md:col-span-2 md:row-span-2' : ''
               }`}
               onClick={() => openLightbox(index)}
             >
@@ -128,8 +145,8 @@ export default function Gallery() {
           </button>
 
           <img
-            src={finlandImages[selectedImage].src}
-            alt={finlandImages[selectedImage].alt}
+            src={galleryImages[selectedImage].src}
+            alt={galleryImages[selectedImage].alt}
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
@@ -142,7 +159,7 @@ export default function Gallery() {
           </button>
 
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-lg">
-            {finlandImages[selectedImage].alt}
+            {galleryImages[selectedImage].alt}
           </p>
         </div>
       )}

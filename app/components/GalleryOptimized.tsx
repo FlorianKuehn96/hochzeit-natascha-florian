@@ -25,7 +25,7 @@ const finlandImages: GalleryImage[] = [
   { src: '/images/finland/file_13---3eeb6ba8-f87c-435c-beac-2dce8473a953.jpg', alt: 'Winterwunderland', width: 800, height: 600 },
   { src: '/images/finland/file_15---64a38c60-4156-4a12-ab67-dbcefb2d6d85.jpg', alt: 'Rentier', width: 800, height: 600 },
   { src: '/images/finland/file_16---6b41d565-8a45-437a-bd4a-9da55a87402c.jpg', alt: 'Nordlichter', width: 800, height: 600 },
-  { src: '/images/hero-kanada.jpg', alt: 'Der Antrag in Kanada', width: 800, height: 600 },
+  { src: '/images/hero-kanada.jpg?v=3', alt: 'Der Antrag in Kanada', width: 800, height: 600 },
 ]
 
 export default function Gallery() {

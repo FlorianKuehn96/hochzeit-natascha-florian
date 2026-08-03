@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { parseSessionToken } from '@/lib/auth-utils'
+import { parseSessionToken, getCurrentSessionFromCookie } from '@/lib/auth-utils'
 import { validateAdminPassword } from '@/lib/db-wrapper'
 
 export const dynamic = 'force-dynamic'
 
 async function verifyAdminToken(request: NextRequest): Promise<string | null> {
+  // Try cookie first (consistent with login)
+  const cookieSession = await getCurrentSessionFromCookie(request)
+  if (cookieSession?.role === 'admin') {
+    return cookieSession.email
+  }
+
+  // Fallback to Authorization header for backward compatibility
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return null

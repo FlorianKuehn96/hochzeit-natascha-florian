@@ -15,8 +15,10 @@ export default function Gifts() {
           </h2>
           <div className="w-20 h-1 bg-terracotta mx-auto mt-6 rounded-full" />
           <p className="text-gray-600 mt-6 max-w-2xl mx-auto">
-            Wir freuen uns darauf, diesen besonderen Tag mit euch zu feiern. 
-            Falls ihr dennoch etwas beitragen möchtet, haben wir zwei Wünsche:
+            Für die Reise ins Glück: Den Haushalt haben wir längst komplett, 
+            vom Eierkocher bis zum Bett. Doch was uns fehlt für unser Glück, 
+            ist ein großes Stück vom Reiseglück. Über eine kleine Finanzspritze 
+            für unsere Hochzeitsreise würden wir uns sehr freuen.
           </p>
         </div>
 

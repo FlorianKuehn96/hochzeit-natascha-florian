@@ -13,25 +13,15 @@ function getJwtSecret(): Uint8Array {
 }
 
 /**
- * Generate a random guest code (format: ABC123XYZ789)
- * Change format parameter to customize
+ * Generate a random guest code (8 chars, uppercase + digits)
  */
-export function generateGuestCode(format: 'simple' | 'readable' = 'readable'): string {
-  if (format === 'readable') {
-    // Format: NAT001, FLO002, etc.
-    const names = ['NAT', 'FLO', 'NAT', 'FLO']
-    const randomName = names[Math.floor(Math.random() * names.length)]
-    const randomNum = String(Math.floor(Math.random() * 10000)).padStart(4, '0')
-    return `${randomName}${randomNum}`
-  } else {
-    // Format: abc123xyz789
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    let code = ''
-    for (let i = 0; i < 12; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return code
+export function generateGuestCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no I/O/0/1 to avoid confusion
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
   }
+  return code
 }
 
 /**
@@ -55,6 +45,8 @@ export async function parseSessionToken(token: string): Promise<AuthSession | nu
       id: payload.id as string,
       role: payload.role as 'admin' | 'guest',
       email: payload.email as string,
+      name: payload.name as string | undefined,
+      code: payload.code as string | undefined,
       expiresAt: payload.expiresAt as number,
     } as AuthSession
   } catch {

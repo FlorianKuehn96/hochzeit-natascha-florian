@@ -6,8 +6,9 @@ import { Guest, Admin } from './auth-types'
 
 // Check if Redis env vars are available - RUNTIME CHECK
 function hasRedisConfig(): boolean {
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  // Support both naming conventions
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.REDIS_TOKEN
   console.log(`[DB Runtime Check] URL: ${url ? 'SET' : 'MISSING'}, Token: ${token ? 'SET' : 'MISSING'}`)
   return !!(url && token)
 }
@@ -23,13 +24,15 @@ export async function createGuest(data: {
     try {
       return await redisDb.createGuest(data)
     } catch (error) {
-      console.error('[DB] Redis error during createGuest:', error)
-      throw error // Don't fallback to memory - we need persistence
+      console.error('[DB] Redis error during createGuest, falling back to memory:', error)
+      // fallback to memory to avoid total failure
+      return memoryDb.createGuest(data)
     }
   }
   console.warn('[DB] No Redis config, using in-memory (data will be lost on restart)')
   return memoryDb.createGuest(data)
 }
+
 
 export async function getGuestByCode(code: string): Promise<Guest | null> {
   try {
@@ -54,17 +57,29 @@ export async function getGuestByEmail(email: string): Promise<Guest | null> {
 }
 
 export async function getAllGuests(): Promise<Guest[]> {
-  // Always try Redis first - critical for data persistence
+  // Try Redis first – crucial for persisted data
   try {
     if (hasRedisConfig()) {
-      return await redisDb.getAllGuests()
+      const redisGuests = await redisDb.getAllGuests()
+      // If Redis returned data, include memory guests as fallback for any newer entries
+      const memoryGuests = await memoryDb.getAllGuests()
+      // Combine, de‑duplicate by guest code
+      const combined = [...redisGuests]
+      const existingCodes = new Set(redisGuests.map(g => g.code))
+      for (const mg of memoryGuests) {
+        if (!existingCodes.has(mg.code)) {
+          combined.push(mg)
+        }
+      }
+      return combined
     }
-    console.warn('[DB] No Redis config, using in-memory (data will be lost on restart)')
   } catch (error) {
-    console.error('[DB] Redis error in getAllGuests:', error)
+    console.error('[DB] Redis error in getAllGuests, falling back to memory:', error)
   }
+  console.warn('[DB] No Redis config or Redis failed, using in-memory (data may be lost on restart)')
   return memoryDb.getAllGuests()
 }
+
 
 export async function updateGuestRSVP(
   code: string,
@@ -74,16 +89,20 @@ export async function updateGuestRSVP(
     accommodation?: string
     dietary?: string
     message?: string
+  },
+  updates?: {
+    name?: string
+    email?: string
   }
 ): Promise<Guest | null> {
   try {
     if (hasRedisConfig()) {
-      return await redisDb.updateGuestRSVP(code, rsvp)
+      return await redisDb.updateGuestRSVP(code, rsvp, updates)
     }
   } catch (error) {
     console.error('[DB] Redis error, falling back to memory:', error)
   }
-  return memoryDb.updateGuestRSVP(code, rsvp)
+  return memoryDb.updateGuestRSVP(code, rsvp, updates)
 }
 
 export async function deleteGuest(code: string): Promise<boolean> {

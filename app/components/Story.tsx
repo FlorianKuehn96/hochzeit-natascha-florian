@@ -15,7 +15,7 @@ const storyEvents: StoryEvent[] = [
   {
     date: 'Mai 2018',
     title: 'Das Colos, Aschaffenburg',
-    description: 'Es begann in einem Moment purer Lebensfreude. Natascha und Florian lernten sich beim Feiern auf der „Big Easy" kennen. Zuerst war Natascha geschockt – vier Jahre Altersunterschied? Aber als sie Florians WhatsApp-Profilbild sah, wollte sie ihm erst einmal die Hölle heiß machen. Ein unwiderstehlicher Funke war entfacht.',
+    description: 'Bei einem Abend voller Musik und Lachen begegneten sich Natascha und Florian zum ersten Mal. Es funkte sofort, auch wenn Natascha kurz über den Altersunterschied von vier Jahren geschockt war. Wer hätte gedacht, dass genau dieser Moment der Anfang von etwas ganz Besonderem sein würde?',
     icon: <Music className="w-6 h-6" />,
   },
   {
@@ -27,19 +27,19 @@ const storyEvents: StoryEvent[] = [
   {
     date: 'August 2018',
     title: 'St. Tropez',
-    description: 'Ihr erster gemeinsamer Urlaub führte sie an die Côte d\'Azur – begleitet von Nataschas Eltern. Ein erster Vorgeschmack auf das Abenteuer, das ihr gemeinsames Leben werden würde.',
+    description: 'Ihr erster gemeinsamer Urlaub führte Natascha und Florian an die Côte d\'Azur zusammen mit Nataschas Eltern. Schon nach den ersten Tagen wussten sie, dass sie gemeinsam jede Menge Abenteuer erleben würden und dass diese Reise nur der Anfang war.',
     icon: <Plane className="w-6 h-6" />,
   },
   {
     date: 'September 2018',
     title: 'Ein Zuhause für zwei',
-    description: 'Im September zog Florian zu Natascha. Ein neuer Lebensabschnitt begann – mit allen Höhen und Tiefen, die eine gemeinsame Zukunft mit sich bringt.',
+    description: 'Im September zog Florian zu Natascha. Plötzlich gab es zwei Zahnbürsten, einen geteilten Kühlschrank und eine Menge neue Geschichten. So begann ihr gemeinsames Leben mit allen Höhen und Tiefen, die dazugehören.',
     icon: <Home className="w-6 h-6" />,
   },
   {
     date: 'Januar 2019',
     title: 'Drei Monate Südostasien',
-    description: 'Viele bezweifelten dieses Unterfangen. Natascha war es gewöhnt, im Luxus zu verreisen – nun stand ein Backpacking-Trip durch Südostasien bevor. Doch was folgte, übertraf alle Erwartungen.',
+    description: 'Viele bezweifelten dieses Unterfangen. Natascha war es gewohnt, im Luxus zu verreisen, aber nun stand ein Backpacking-Trip durch Südostasien bevor. Doch was folgte, übertraf alle Erwartungen.',
     icon: <MapPin className="w-6 h-6" />,
     highlight: true,
   },
@@ -52,14 +52,20 @@ const storyEvents: StoryEvent[] = [
   {
     date: 'Die Corona-Zeit',
     title: 'Die Entdeckung des Campings',
-    description: 'Als die Welt stillstand, fanden sie sich neu. Norwegen und Österreich wurden ihre Zufluchtsorte – beim Angeln und Wandern verliebten sie sich tiefer ineinander.',
+    description: 'Als die Welt stillstand, fanden sie sich neu. Ihr erstes Camping-Abenteuer führte sie mit dem Wohnmobil durch Schweden, ein Jahr später ging es mit dem Campervan durch Norwegen. Am Lagerfeuer unter Sternenhimmel, beim Angeln und Wandern wuchs ihre Liebe Tag für Tag.',
     icon: <Tent className="w-6 h-6" />,
     highlight: true,
   },
   {
+    date: 'August 2022',
+    title: 'Der erste eigene Camper',
+    description: 'Es wurde Zeit für den ersten eigenen Camper, einen umgebauten alten Ford Transit. Natascha kämpft ab und zu mit dem Rost, doch die vielen Stunden Arbeit und Liebe, die in ihn gesteckt wurden, machen jede Reise besonders. Das liebevoll „Töffi-Töffi" getaufte Gefährt bringt die beiden auf luxuriöse Campingplätze von der Zugspitze bis nach Sylt, aber auch auf abenteuerliche Roadtrips durch Italien und die Dolomiten.',
+    icon: <Tent className="w-6 h-6" />,
+  },
+  {
     date: '2024',
-    title: 'Neuseeland',
-    description: 'Drei Monate lang tourten sie mit ihrem Camper durch Neuseeland. Ein Abenteuer, das ihre Sehnsucht nach mehr weckte.',
+    title: 'Neuseeland & die Cook-Inseln',
+    description: 'Zweieinhalb Monate lang erkundeten sie Neuseeland mit dem Camper, dann folgten zwei Wochen auf den Cook-Inseln. So weit weg von Zuhause waren sie noch nie. Zwischen gemütlichen Camper-Abenden inmitten der Natur, Wanderungen durch endlose Landschaften und entspannten Tagen an weißen Stränden wuchs ihre Sehnsucht nach noch mehr gemeinsamen Abenteuern.',
     icon: <Mountain className="w-6 h-6" />,
     highlight: true,
   },
@@ -71,9 +77,16 @@ const storyEvents: StoryEvent[] = [
     highlight: true,
   },
   {
+    date: 'Februar 2026',
+    title: '30. Geburtstag im eisigen Norden',
+    description: 'Florians 30. Geburtstag führte die beiden nach Finnisch-Lappland. Bei klirrender Kälte erkundeten sie die Winterlandschaft auf Schneemobilen, trafen auf neugierige Rentiere und wechselten zwischen heißer Sauna und eiskaltem Eisbaden. Zwei Tage lang zogen sie auf Huskyschlitten durch verschneite Wälder, und als Höhepunkt flammten die Nordlichter über dem Nachthimmel auf.',
+    icon: <Plane className="w-6 h-6" />,
+    highlight: true,
+  },
+  {
     date: '19. September 2026',
     title: 'Ein neues Kapitel beginnt',
-    description: 'Nach acht Jahren voller Abenteuer werden Natascha und Florian auf dem Weingut Baron Knyphausen den nächsten großen Schritt wagen.',
+    description: 'Nach acht Jahren voller Abenteuer und unvergesslichen Momenten werden Natascha und Florian den nächsten großen Schritt wagen.',
     icon: <Heart className="w-6 h-6" />,
     highlight: true,
   },

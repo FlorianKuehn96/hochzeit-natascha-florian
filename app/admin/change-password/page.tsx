@@ -57,8 +57,8 @@ export default function ChangePasswordPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('hochzeit_auth_session')}`,
         },
+        credentials: 'include', // Send HttpOnly cookie automatically
         body: JSON.stringify({
           oldPassword,
           newPassword,

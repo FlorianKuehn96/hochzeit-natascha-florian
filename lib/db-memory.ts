@@ -11,9 +11,10 @@ const guestsList: string[] = []
 
 // Initialize with admin accounts from environment variables
 // Requires ADMIN_INIT=true and ADMIN_EMAIL / ADMIN_PASSWORD_HASH
-async function initializeDefaults() {
+function initializeDefaults() {
   // Only initialize if explicitly enabled
   if (process.env.ADMIN_INIT !== 'true') {
+    console.log('[db-memory] ADMIN_INIT not set to true, skipping admin initialization')
     return
   }
 
@@ -21,12 +22,15 @@ async function initializeDefaults() {
   const adminEmails = process.env.ADMIN_EMAIL?.split(',').map(e => e.trim()).filter(Boolean) || []
   const adminPasswords = process.env.ADMIN_PASSWORD?.split(',').map(p => p.trim()).filter(Boolean) || []
 
+  console.log(`[db-memory] Initializing ${adminEmails.length} admins from environment`)
+
   for (let i = 0; i < adminEmails.length; i++) {
     const email = adminEmails[i]
     const password = adminPasswords[i] || process.env.ADMIN_PASSWORD // Fallback to single password
     
     if (email && password) {
-      const hashedPassword = await bcrypt.hash(password, 10)
+      // Use sync version to ensure initialization completes before exports
+      const hashedPassword = bcrypt.hashSync(password, 10)
       adminsMap.set(email.toLowerCase(), {
         email: email.toLowerCase(),
         password: hashedPassword,
@@ -37,8 +41,8 @@ async function initializeDefaults() {
   }
 }
 
-// Initialize on first import
-initializeDefaults().catch(console.error)
+// Initialize synchronously on module load
+initializeDefaults()
 
 // ===== GUEST OPERATIONS =====
 
@@ -95,6 +99,10 @@ export async function updateGuestRSVP(
     accommodation?: string
     dietary?: string
     message?: string
+  },
+  updates?: {
+    name?: string
+    email?: string
   }
 ): Promise<Guest | null> {
   const guest = guestsMap.get(code)
@@ -102,6 +110,8 @@ export async function updateGuestRSVP(
 
   const updated: Guest = {
     ...guest,
+    name: updates?.name || guest.name,
+    email: updates?.email || guest.email,
     rsvp: {
       status: rsvp.status,
       guests: rsvp.guests,

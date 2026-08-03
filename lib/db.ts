@@ -1,79 +1,28 @@
-// SQLite Database Handler
-import Database from 'better-sqlite3'
-import path from 'path'
+// Redis Database Handler for Vercel Serverless
+import { Redis } from '@upstash/redis'
 import { Guest, Admin } from './auth-types'
 
-// Database file path (Vercel uses /tmp or process.cwd())
-const dbPath = path.join(process.cwd(), 'data', 'hochzeit.db')
+// Initialize Redis client
+const redis = new Redis({
+  url: process.env.REDIS_URL || '',
+  token: process.env.REDIS_TOKEN || '',
+})
 
-let db: Database.Database | null = null
-
-export function getDB(): Database.Database {
-  if (!db) {
-    db = new Database(dbPath)
-    db.pragma('journal_mode = WAL')
-    initializeDatabase()
-  }
-  return db
-}
-
-function initializeDatabase() {
-  const database = getDB()
-
-  // Guests table
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS guests (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      code TEXT NOT NULL UNIQUE,
-      rsvp_status TEXT DEFAULT 'pending',
-      rsvp_guests INTEGER,
-      rsvp_accommodation TEXT,
-      rsvp_dietary TEXT,
-      rsvp_message TEXT,
-      rsvp_submitted_at TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `)
-
-  // Admins table
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS admins (
-      email TEXT PRIMARY KEY,
-      password TEXT NOT NULL,
-      name TEXT,
-      created_at TEXT NOT NULL
-    )
-  `)
-
-  // Create indexes
-  database.exec(`
-    CREATE INDEX IF NOT EXISTS idx_guests_code ON guests(code);
-    CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
-  `)
-}
+const GUEST_PREFIX = 'guest:'
+const ADMIN_PREFIX = 'admin:'
+const EMAIL_TO_CODE_PREFIX = 'email:'
 
 // ===== GUEST OPERATIONS =====
 
-export function createGuest(data: {
+export async function createGuest(data: {
   name: string
   email: string
   code: string
-}): Guest {
-  const database = getDB()
+}): Promise<Guest> {
   const id = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   const now = new Date().toISOString()
 
-  const stmt = database.prepare(`
-    INSERT INTO guests (id, name, email, code, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `)
-
-  stmt.run(id, data.name, data.email, data.code, now, now)
-
-  return {
+  const guest: Guest = {
     id,
     name: data.name,
     email: data.email,
@@ -83,79 +32,59 @@ export function createGuest(data: {
     },
     createdAt: now,
   }
+
+  // Store guest by code
+  await redis.set(`${GUEST_PREFIX}${data.code}`, JSON.stringify(guest))
+  
+  // Map email to code for lookup
+  await redis.set(`${EMAIL_TO_CODE_PREFIX}${data.email.toLowerCase()}`, data.code)
+
+  return guest
 }
 
-export function getGuestByCode(code: string): Guest | null {
-  const database = getDB()
-  const stmt = database.prepare('SELECT * FROM guests WHERE code = ?')
-  const row = stmt.get(code) as any
-
-  if (!row) return null
-
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    code: row.code,
-    rsvp: {
-      status: row.rsvp_status,
-      guests: row.rsvp_guests,
-      accommodation: row.rsvp_accommodation,
-      dietary: row.rsvp_dietary,
-      message: row.rsvp_message,
-      submittedAt: row.rsvp_submitted_at,
-    },
-    createdAt: row.created_at,
+export async function getGuestByCode(code: string): Promise<Guest | null> {
+  const data = await redis.get<string>(`${GUEST_PREFIX}${code}`)
+  if (!data) return null
+  
+  try {
+    return JSON.parse(data) as Guest
+  } catch {
+    return null
   }
 }
 
-export function getGuestByEmail(email: string): Guest | null {
-  const database = getDB()
-  const stmt = database.prepare('SELECT * FROM guests WHERE email = ?')
-  const row = stmt.get(email) as any
+export async function getGuestByEmail(email: string): Promise<Guest | null> {
+  const code = await redis.get<string>(`${EMAIL_TO_CODE_PREFIX}${email.toLowerCase()}`)
+  if (!code) return null
+  
+  return getGuestByCode(code)
+}
 
-  if (!row) return null
+export async function getAllGuests(): Promise<Guest[]> {
+  // Get all keys matching guest:*
+  const keys = await redis.keys(`${GUEST_PREFIX}*`)
+  if (!keys || keys.length === 0) return []
 
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    code: row.code,
-    rsvp: {
-      status: row.rsvp_status,
-      guests: row.rsvp_guests,
-      accommodation: row.rsvp_accommodation,
-      dietary: row.rsvp_dietary,
-      message: row.rsvp_message,
-      submittedAt: row.rsvp_submitted_at,
-    },
-    createdAt: row.created_at,
+  const guests: Guest[] = []
+  
+  for (const key of keys) {
+    const data = await redis.get<string>(key)
+    if (data) {
+      try {
+        guests.push(JSON.parse(data) as Guest)
+      } catch {
+        // Skip invalid entries
+      }
+    }
   }
+
+  // Sort by createdAt descending
+  return guests.sort((a, b) => 
+    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  )
 }
 
-export function getAllGuests(): Guest[] {
-  const database = getDB()
-  const stmt = database.prepare('SELECT * FROM guests ORDER BY created_at DESC')
-  const rows = stmt.all() as any[]
-
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    code: row.code,
-    rsvp: {
-      status: row.rsvp_status,
-      guests: row.rsvp_guests,
-      accommodation: row.rsvp_accommodation,
-      dietary: row.rsvp_dietary,
-      message: row.rsvp_message,
-      submittedAt: row.rsvp_submitted_at,
-    },
-    createdAt: row.created_at,
-  }))
-}
-
-export function updateGuestRSVP(
+export async function updateGuestRSVP(
   code: string,
   rsvp: {
     status: 'attending' | 'declined'
@@ -163,52 +92,78 @@ export function updateGuestRSVP(
     accommodation?: string
     dietary?: string
     message?: string
+  },
+  updates?: {
+    name?: string
+    email?: string
   }
-): Guest | null {
-  const database = getDB()
+): Promise<Guest | null> {
+  const guest = await getGuestByCode(code)
+  if (!guest) return null
+
   const now = new Date().toISOString()
 
-  const stmt = database.prepare(`
-    UPDATE guests 
-    SET rsvp_status = ?, rsvp_guests = ?, rsvp_accommodation = ?, 
-        rsvp_dietary = ?, rsvp_message = ?, rsvp_submitted_at = ?, updated_at = ?
-    WHERE code = ?
-  `)
+  // If email changed, update email mapping
+  let updatedEmail = guest.email
+  if (updates?.email && updates.email !== guest.email) {
+    // Remove old email mapping
+    if (guest.email) {
+      await redis.del(`${EMAIL_TO_CODE_PREFIX}${guest.email.toLowerCase()}`)
+    }
+    // Add new email mapping
+    await redis.set(`${EMAIL_TO_CODE_PREFIX}${updates.email.toLowerCase()}`, code)
+    updatedEmail = updates.email
+  }
+  
+  const updatedGuest: Guest = {
+    ...guest,
+    name: updates?.name || guest.name,
+    email: updatedEmail,
+    rsvp: {
+      status: rsvp.status,
+      guests: rsvp.guests,
+      accommodation: rsvp.accommodation as 'needed' | 'not-needed' | undefined,
+      dietary: rsvp.dietary,
+      message: rsvp.message,
+      submittedAt: now,
+    },
+  }
 
-  stmt.run(
-    rsvp.status,
-    rsvp.guests || null,
-    rsvp.accommodation || null,
-    rsvp.dietary || null,
-    rsvp.message || null,
-    now,
-    now,
-    code
-  )
-
-  return getGuestByCode(code)
+  await redis.set(`${GUEST_PREFIX}${code}`, JSON.stringify(updatedGuest))
+  
+  return updatedGuest
 }
 
-export function deleteGuest(code: string): boolean {
-  const database = getDB()
-  const stmt = database.prepare('DELETE FROM guests WHERE code = ?')
-  const result = stmt.run(code)
-  return (result.changes || 0) > 0
+export async function deleteGuest(code: string): Promise<boolean> {
+  const guest = await getGuestByCode(code)
+  if (!guest) return false
+
+  // Delete guest data
+  await redis.del(`${GUEST_PREFIX}${code}`)
+  
+  // Delete email mapping
+  if (guest.email) {
+    await redis.del(`${EMAIL_TO_CODE_PREFIX}${guest.email.toLowerCase()}`)
+  }
+
+  return true
 }
 
 // ===== ADMIN OPERATIONS =====
 
 export async function createAdmin(data: { email: string; password: string; name?: string }) {
   const bcrypt = require('bcryptjs')
-  const database = getDB()
   const hashedPassword = await bcrypt.hash(data.password, 10)
   const now = new Date().toISOString()
 
-  const stmt = database.prepare(
-    'INSERT INTO admins (email, password, name, created_at) VALUES (?, ?, ?, ?)'
-  )
+  const admin = {
+    email: data.email.toLowerCase(),
+    password: hashedPassword,
+    name: data.name,
+    createdAt: now,
+  }
 
-  stmt.run(data.email, hashedPassword, data.name || null, now)
+  await redis.set(`${ADMIN_PREFIX}${data.email.toLowerCase()}`, JSON.stringify(admin))
 
   return {
     email: data.email,
@@ -217,17 +172,14 @@ export async function createAdmin(data: { email: string; password: string; name?
   }
 }
 
-export function getAdminByEmail(email: string): Admin | null {
-  const database = getDB()
-  const stmt = database.prepare('SELECT * FROM admins WHERE email = ?')
-  const row = stmt.get(email) as any
+export async function getAdminByEmail(email: string): Promise<Admin | null> {
+  const data = await redis.get<string>(`${ADMIN_PREFIX}${email.toLowerCase()}`)
+  if (!data) return null
 
-  if (!row) return null
-
-  return {
-    email: row.email,
-    password: row.password,
-    createdAt: row.created_at,
+  try {
+    return JSON.parse(data) as Admin
+  } catch {
+    return null
   }
 }
 
@@ -236,24 +188,42 @@ export async function validateAdminPassword(
   password: string
 ): Promise<boolean> {
   const bcrypt = require('bcryptjs')
-  const admin = getAdminByEmail(email)
+  const admin = await getAdminByEmail(email)
 
   if (!admin) return false
 
   return await bcrypt.compare(password, admin.password)
 }
 
-export function getAllAdmins() {
-  const database = getDB()
-  const stmt = database.prepare('SELECT email, name, created_at FROM admins ORDER BY created_at')
-  return stmt.all()
+export async function getAllAdmins() {
+  const keys = await redis.keys(`${ADMIN_PREFIX}*`)
+  if (!keys || keys.length === 0) return []
+
+  const admins = []
+  
+  for (const key of keys) {
+    const data = await redis.get<string>(key)
+    if (data) {
+      try {
+        const admin = JSON.parse(data)
+        admins.push({
+          email: admin.email,
+          name: admin.name,
+          createdAt: admin.createdAt,
+        })
+      } catch {
+        // Skip invalid entries
+      }
+    }
+  }
+
+  return admins.sort((a: any, b: any) => 
+    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  )
 }
 
 // ===== UTILS =====
 
 export function closeDB() {
-  if (db) {
-    db.close()
-    db = null
-  }
+  // Redis client doesn't need explicit closing in serverless
 }

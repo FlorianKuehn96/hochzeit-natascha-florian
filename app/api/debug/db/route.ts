@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllGuests } from '@/lib/db-wrapper'
+import { getRedis } from '@/lib/db-upstash'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,11 +18,17 @@ export async function GET(request: NextRequest) {
     console.log('[Debug DB] Env check:', envCheck)
     
     const guests = await getAllGuests()
-    
+    // also get the raw codes from Redis via wrapper for debugging
+    const redis = getRedis()
+    let rawCodes: string[] = []
+    if (redis) {
+      rawCodes = await redis.smembers('guests:list')
+    }
     return NextResponse.json({
       envCheck,
       guestCount: guests.length,
-      guests: guests.slice(0, 3),
+      guests: guests.map(g => g.code),
+      rawCodes,
     })
   } catch (error: any) {
     console.error('[Debug DB] Error:', error)

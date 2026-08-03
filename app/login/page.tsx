@@ -223,9 +223,6 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sand/40 text-xs">
-            Fragen? Kontaktiere uns: info@natascha-florian-hochzeit.de
-          </p>
         </div>
       </div>
     </div>
