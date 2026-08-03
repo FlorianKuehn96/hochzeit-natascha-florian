@@ -143,7 +143,7 @@ export async function deleteGuest(code: string): Promise<boolean> {
 
 export async function updateGuestMealChoice(
   code: string,
-  mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
+  mainCourse: 'beef' | 'fish' | 'vegan'
 ): Promise<Guest | null> {
   const guest = guestsMap.get(code)
   if (!guest) return null

@@ -3,34 +3,27 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { Utensils, Check, ArrowLeft, AlertCircle, Beef, Fish, Leaf, Sprout } from 'lucide-react'
+import { Utensils, Check, ArrowLeft, AlertCircle, Beef, Fish, Sprout } from 'lucide-react'
 
 const MEAL_OPTIONS = [
   {
     id: 'beef',
-    title: 'Rinderfilet',
-    description: 'Zartes Rinderfilet mit Rotweinsoße, Kartoffelgratin und saisonalem Gemüse',
+    title: 'Weiderind',
+    description: 'Zartes Weiderind mit saisonalem Gemüse und Kartoffelbeilage',
     icon: Beef,
     emoji: '🥩',
   },
   {
     id: 'fish',
-    title: 'Lachsfilet',
-    description: 'Gebratenes Lachsfilet auf Dillsoße, Basmatireis und Zitronengemüse',
+    title: 'Saibling',
+    description: 'Gebratener Saibling auf frischer Soße mit Kräutern und Reis',
     icon: Fish,
     emoji: '🐟',
   },
   {
-    id: 'vegetarian',
-    title: 'Vegetarisch',
-    description: 'Gefüllte Melanzani mit Hirtenkäse, Tomatensoße und Pinienkernen auf Couscous',
-    icon: Leaf,
-    emoji: '🧀',
-  },
-  {
     id: 'vegan',
-    title: 'Vegan',
-    description: 'Kürbis-Risotto mit gebratenem Champignons, Trüffelöl und frischem Basilikum',
+    title: 'Veganes Kürbisrisotto',
+    description: 'Cremiges Kürbisrisotto mit gebratenen Champignons und Trüffelöl',
     icon: Sprout,
     emoji: '🌱',
   },

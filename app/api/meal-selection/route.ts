@@ -4,7 +4,7 @@ import { getCurrentSessionFromCookie } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
 
-const VALID_CHOICES = ['beef', 'fish', 'vegetarian', 'vegan'] as const
+const VALID_CHOICES = ['beef', 'fish', 'vegan'] as const
 type MealChoice = typeof VALID_CHOICES[number]
 
 /**

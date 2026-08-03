@@ -120,7 +120,7 @@ export async function deleteGuest(code: string): Promise<boolean> {
 
 export async function updateGuestMealChoice(
   code: string,
-  mainCourse: 'beef' | 'fish' | 'vegetarian' | 'vegan'
+  mainCourse: 'beef' | 'fish' | 'vegan'
 ): Promise<Guest | null> {
   try {
     if (hasRedisConfig()) {
