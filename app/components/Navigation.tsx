@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, X, Heart, Shield, Settings, LogOut } from 'lucide-react'
+import { Menu, X, Heart, Shield, Settings, LogOut, Utensils } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
 const navItems = [
@@ -67,6 +67,19 @@ export default function Navigation() {
                 {item.name}
               </a>
             ))}
+
+            {/* Hauptgang-Auswahl für eingeloggte Gäste */}
+            {isAuthenticated && !isAdmin && (
+              <a
+                href="/meal"
+                className={`flex items-center gap-1.5 text-sm font-medium transition-all duration-300 hover:opacity-70 ${
+                  isScrolled ? 'text-forest-dark' : 'text-white'
+                }`}
+              >
+                <Utensils className="w-4 h-4" />
+                Hauptgang
+              </a>
+            )}
 
             {/* Admin Buttons */}
             {isAdmin && (
@@ -155,6 +168,18 @@ export default function Navigation() {
               {item.name}
             </a>
           ))}
+          {/* Hauptgang für Gäste Mobile */}
+          {isAuthenticated && !isAdmin && (
+            <a
+              href="/meal"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2 text-warm-cream text-2xl font-serif hover:text-terracotta transition-colors duration-300"
+            >
+              <Utensils className="w-5 h-5" />
+              Hauptgang
+            </a>
+          )}
+
           {/* Admin Buttons Mobile */}
           {isAdmin && (
             <>

@@ -159,7 +159,7 @@ export default function MealSelectionPage() {
             Bitte gib zuerst deine Rückmeldung auf der Hauptseite.
           </p>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/')}
             className="px-8 py-3 bg-terracotta text-white rounded-2xl font-medium hover:bg-burnt-orange transition-colors"
           >
             Zurück zur Übersicht
@@ -223,7 +223,7 @@ export default function MealSelectionPage() {
           </p>
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/')}
               className="px-6 py-3 bg-forest-dark text-white rounded-2xl font-medium hover:bg-forest-light transition-colors"
             >
               Zurück zur Übersicht
@@ -246,11 +246,11 @@ export default function MealSelectionPage() {
       <div className="max-w-3xl mx-auto">
         {/* Back button */}
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/')}
           className="flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Zurück zur Übersicht
+          Zurück zur Startseite
         </button>
 
         {/* Header */}
